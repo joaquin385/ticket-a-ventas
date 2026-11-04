@@ -1,0 +1,27 @@
+{
+  "fecha": "2024-11-04",
+  "hora": "14:30",
+  "items": [
+    {
+      "descripcion": "Coca Cola 2.25L",
+      "cantidad": 2,
+      "precio_unitario": 850.0,
+      "subtotal": 1700.0
+    },
+    {
+      "descripcion": "Pan lactal",
+      "cantidad": 1,
+      "precio_unitario": 1200.0,
+      "subtotal": 1200.0
+    },
+    {
+      "descripcion": "Leche entera 1L",
+      "cantidad": 1,
+      "precio_unitario": 950.0,
+      "subtotal": 950.0
+    }
+  ],
+  "total": 3850.0,
+  "medio_pago": "efectivo",
+  "confianza": 0.95
+}

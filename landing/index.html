@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket a Ventas — sacá una foto, listo el número</title>
+  <meta name="description" content="Mandá por WhatsApp la foto del ticket o del cuaderno y recibí tus ventas ordenadas. ARS 7.000/mes. Prueba gratis 14 días o 30 fotos." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #14201b;
+      --paper: #eef4ef;
+      --leaf: #1f6b4a;
+      --leaf-deep: #0d3d2c;
+      --sun: #e8c547;
+      --mist: rgba(20, 32, 27, 0.08);
+      --max: 68rem;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "DM Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.5;
+    }
+    a { color: inherit; }
+    .wrap { width: min(100% - 2rem, var(--max)); margin-inline: auto; }
+
+    /* Hero: one composition, brand first, full-bleed atmosphere */
+    .hero {
+      min-height: 100svh;
+      display: grid;
+      align-content: end;
+      padding: 1.25rem 0 3.5rem;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(13, 61, 44, 0.15) 0%, rgba(13, 61, 44, 0.82) 55%, rgba(13, 61, 44, 0.95) 100%),
+        radial-gradient(ellipse 80% 60% at 70% 20%, rgba(232, 197, 71, 0.35), transparent 55%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E"),
+        linear-gradient(135deg, #1a5c40, #0a2e22 60%, #16382c);
+      color: #f5faf7;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -10% -20% 40%;
+      height: 70%;
+      background:
+        radial-gradient(circle at 30% 40%, rgba(255,255,255,0.12), transparent 45%),
+        repeating-linear-gradient(-12deg, transparent 0 14px, rgba(232,197,71,0.07) 14px 15px);
+      transform: rotate(8deg);
+      pointer-events: none;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    @keyframes drift {
+      from { transform: rotate(8deg) translateY(0); }
+      to { transform: rotate(6deg) translateY(-18px); }
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .brand {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(2.8rem, 9vw, 5.5rem);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      max-width: 12ch;
+      animation: rise 0.8s ease-out both;
+    }
+    .brand em { font-style: italic; color: var(--sun); }
+    .hero p {
+      margin-top: 1.1rem;
+      max-width: 32ch;
+      font-size: 1.15rem;
+      opacity: 0.92;
+      animation: rise 0.9s 0.12s ease-out both;
+    }
+    .cta-row {
+      display: flex; flex-wrap: wrap; gap: .75rem;
+      margin-top: 1.75rem;
+      animation: rise 1s 0.2s ease-out both;
+      position: relative; z-index: 1;
+    }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.9rem 1.35rem;
+      border-radius: 999px;
+      font-weight: 700;
+      text-decoration: none;
+      border: 2px solid transparent;
+      transition: transform .2s ease, background .2s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: var(--sun); color: var(--leaf-deep); }
+    .btn-ghost { border-color: rgba(255,255,255,0.45); color: #fff; }
+
+    section { padding: 4.5rem 0; }
+    section h2 {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.1;
+      margin-bottom: 0.75rem;
+    }
+    section .lead { color: #3f4f47; max-width: 40ch; margin-bottom: 2rem; }
+
+    .steps {
+      display: grid;
+      gap: 1.25rem;
+      counter-reset: step;
+    }
+    @media (min-width: 800px) {
+      .steps { grid-template-columns: repeat(3, 1fr); }
+    }
+    .step {
+      background: #fff;
+      border: 1px solid var(--mist);
+      border-radius: 1.25rem;
+      padding: 1.35rem;
+      min-height: 11rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      font-family: "Instrument Serif", serif;
+      font-size: 3.5rem;
+      color: rgba(31, 107, 74, 0.18);
+      position: absolute; right: 1rem; top: 0.2rem;
+    }
+    .step h3 { font-size: 1.15rem; margin-bottom: .4rem; position: relative; }
+    .step p { color: #4b5c53; position: relative; }
+
+    .price {
+      background: var(--leaf-deep);
+      color: #f3faf6;
+      border-radius: 1.75rem;
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+      display: grid;
+      gap: 1rem;
+      align-items: center;
+    }
+    @media (min-width: 800px) {
+      .price { grid-template-columns: 1.4fr 1fr; }
+    }
+    .price .amount {
+      font-family: "Instrument Serif", serif;
+      font-size: clamp(2.8rem, 7vw, 4.5rem);
+      line-height: 1;
+    }
+    .price .amount small { font-size: .4em; opacity: .8; }
+    .price ul { list-style: none; display: grid; gap: .45rem; }
+    .price li::before { content: "✓ "; color: var(--sun); font-weight: 700; }
+
+    .faq details {
+      border-bottom: 1px solid var(--mist);
+      padding: 1rem 0;
+    }
+    .faq summary {
+      cursor: pointer; font-weight: 600; list-style: none;
+      display: flex; justify-content: space-between; gap: 1rem;
+    }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; color: var(--leaf); font-size: 1.25rem; }
+    .faq details[open] summary::after { content: "–"; }
+    .faq p { margin-top: .65rem; color: #4b5c53; max-width: 55ch; }
+
+    footer {
+      padding: 2.5rem 0 3rem;
+      border-top: 1px solid var(--mist);
+      color: #5b6b62;
+      font-size: .95rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <h1 class="brand">Ticket a <em>Ventas</em></h1>
+      <p>Sacá una foto del ticket o del cuaderno, mandala por WhatsApp y listo: tus ventas ordenadas.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" id="cta-wa" href="#">Empezar gratis por WhatsApp</a>
+        <a class="btn btn-ghost" href="#como">Cómo funciona</a>
+      </div>
+    </div>
+  </header>
+
+  <section id="como">
+    <div class="wrap">
+      <h2>Tres pasos. Sin planilla.</h2>
+      <p class="lead">Hecho para kioscos, almacenes y verdulerías que ya viven en el celu.</p>
+      <div class="steps">
+        <article class="step">
+          <h3>Fotografíá</h3>
+          <p>El ticket de la jornada o la hoja del cuaderno manuscrito.</p>
+        </article>
+        <article class="step">
+          <h3>Mandalo por WhatsApp</h3>
+          <p>Al mismo número. Nosotros leemos la foto con IA.</p>
+        </article>
+        <article class="step">
+          <h3>Recibí el resumen</h3>
+          <p>Ítems, totales y export a Excel cuando lo necesites.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="precio">
+    <div class="wrap">
+      <div class="price">
+        <div>
+          <h2 style="color:#fff;margin-bottom:.5rem">Un precio claro</h2>
+          <p style="opacity:.85;max-width:36ch">Pensado para el comercio de barrio. Sin sorpresas ni letra chica.</p>
+          <p class="amount" style="margin-top:1rem">$7.000 <small>/mes</small></p>
+        </div>
+        <ul>
+          <li>Prueba gratis: 14 días o 30 fotos</li>
+          <li>Resúmenes semanales y pronóstico</li>
+          <li>Export CSV / Excel</li>
+          <li>Pago con Mercado Pago</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="faq">
+    <div class="wrap">
+      <h2>Preguntas frecuentes</h2>
+      <p class="lead">Lo que más nos preguntan los dueños de local.</p>
+      <details>
+        <summary>¿Tengo que cargar el stock a mano?</summary>
+        <p>No. Mandás la foto y nosotros armamos la venta. Si algo queda dudoso, lo revisamos.</p>
+      </details>
+      <details>
+        <summary>¿Funciona con cuaderno manuscrito?</summary>
+        <p>Sí. Cuanto más clara la letra, mejor. Si no se entiende, te pedimos confirmación.</p>
+      </details>
+      <details>
+        <summary>¿Cómo es la prueba gratis?</summary>
+        <p>14 días o 30 fotos, lo que ocurra primero. Después el plan es ARS 7.000 por mes.</p>
+      </details>
+      <details>
+        <summary>¿Mis datos quedan en WhatsApp?</summary>
+        <p>Guardamos la venta estructurada en nuestra base. Las fotos se usan para leer el ticket; no las publicamos.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <strong>Ticket a Ventas</strong> — ventas claras, sin tipear.<br />
+      <a id="cta-wa-footer" href="#">Escribinos por WhatsApp</a>
+    </div>
+  </footer>
+
+  <script>
+    // Número configurable: ?wa=54911... o meta tag / window
+    const params = new URLSearchParams(location.search);
+    const wa =
+      params.get('wa') ||
+      window.TICKET_A_VENTAS_WA ||
+      document.querySelector('meta[name="whatsapp-number"]')?.content ||
+      '5491100000000';
+    const text = encodeURIComponent('Hola! Quiero probar Ticket a Ventas');
+    const href = 'https://wa.me/' + wa.replace(/\D/g, '') + '?text=' + text;
+    document.getElementById('cta-wa').href = href;
+    document.getElementById('cta-wa-footer').href = href;
+  </script>
+</body>
+</html>

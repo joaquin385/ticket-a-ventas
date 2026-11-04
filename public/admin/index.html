@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cola de revisión — Ticket a Ventas</title>
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --ink: #1c1917;
+      --accent: #0f766e;
+      --card: #fff;
+      --muted: #78716c;
+      --danger: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(circle at top left, #ccfbf1, transparent 40%), var(--bg);
+      color: var(--ink);
+      padding: 1.5rem;
+    }
+    h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; margin: 0 0 .25rem; }
+    .sub { color: var(--muted); margin-bottom: 1.25rem; }
+    .auth {
+      display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem;
+      background: var(--card); padding: 1rem; border-radius: 12px;
+      border: 1px solid #e7e5e4;
+    }
+    input, button, textarea {
+      font: inherit; padding: .55rem .75rem; border-radius: 8px; border: 1px solid #d6d3d1;
+    }
+    button {
+      background: var(--accent); color: #fff; border: none; cursor: pointer; font-weight: 600;
+    }
+    button.secondary { background: #44403c; }
+    button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+    .grid { display: grid; gap: 1rem; }
+    .card {
+      background: var(--card); border-radius: 14px; padding: 1rem;
+      border: 1px solid #e7e5e4; display: grid; gap: 1rem;
+      grid-template-columns: 140px 1fr;
+    }
+    @media (max-width: 720px) { .card { grid-template-columns: 1fr; } }
+    .card img {
+      width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: #e7e5e4;
+    }
+    .meta { font-size: .9rem; color: var(--muted); }
+    .badge {
+      display: inline-block; background: #fef3c7; color: #92400e;
+      padding: .15rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 700;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    td, th { padding: .35rem; border-bottom: 1px solid #f5f5f4; text-align: left; }
+    .actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+    .empty { padding: 2rem; text-align: center; color: var(--muted); }
+    .err { color: var(--danger); }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <h1>Cola de revisión</h1>
+  <p class="sub">Ventas con baja confianza — Ticket a Ventas</p>
+
+  <div class="auth">
+    <input id="token" type="password" placeholder="ADMIN_API_TOKEN" style="min-width:240px;flex:1" />
+    <button id="btnLoad" type="button">Cargar pendientes</button>
+  </div>
+  <p id="status" class="meta"></p>
+  <div id="list" class="grid"></div>
+
+  <script>
+    const tokenEl = document.getElementById('token');
+    const listEl = document.getElementById('list');
+    const statusEl = document.getElementById('status');
+    tokenEl.value = localStorage.getItem('tav_admin_token') || '';
+
+    function authHeaders() {
+      return { Authorization: 'Bearer ' + tokenEl.value, 'Content-Type': 'application/json' };
+    }
+
+    async function load() {
+      localStorage.setItem('tav_admin_token', tokenEl.value);
+      statusEl.textContent = 'Cargando…';
+      statusEl.className = 'meta';
+      listEl.innerHTML = '';
+      try {
+        const res = await fetch('/admin/api/ventas/revision', { headers: authHeaders() });
+        if (!res.ok) throw new Error('HTTP ' + res.status + (res.status === 401 ? ' — token inválido' : ''));
+        const data = await res.json();
+        statusEl.textContent = data.length + ' pendiente(s)';
+        if (!data.length) {
+          listEl.innerHTML = '<div class="empty">No hay ventas para revisar. Buen trabajo.</div>';
+          return;
+        }
+        listEl.innerHTML = data.map(renderCard).join('');
+        listEl.querySelectorAll('[data-approve]').forEach((btn) => {
+          btn.addEventListener('click', () => approve(btn.getAttribute('data-approve')));
+        });
+        listEl.querySelectorAll('[data-save]').forEach((btn) => {
+          btn.addEventListener('click', () => save(btn.getAttribute('data-save')));
+        });
+      } catch (e) {
+        statusEl.textContent = String(e.message || e);
+        statusEl.className = 'meta err';
+      }
+    }
+
+    function renderCard(v) {
+      const itemsRows = (v.items || []).map((it, idx) => `
+        <tr>
+          <td><input data-f="desc" data-i="${idx}" value="${escapeAttr(it.descripcion)}" /></td>
+          <td><input data-f="cant" data-i="${idx}" type="number" step="0.001" value="${it.cantidad}" style="width:5rem" /></td>
+          <td><input data-f="sub" data-i="${idx}" type="number" step="0.01" value="${it.subtotal}" style="width:6rem" /></td>
+        </tr>`).join('');
+      const img = v.url_foto
+        ? `<img src="${escapeAttr(v.url_foto)}" alt="ticket" />`
+        : `<div class="empty" style="padding:1rem">Sin foto</div>`;
+      return `
+        <article class="card" id="card-${v.id}">
+          ${img}
+          <div>
+            <div><span class="badge">confianza ${v.confianza_score ?? '?'}</span></div>
+            <strong>${escapeHtml(v.nombre_comercio || 'Comercio')}</strong>
+            <div class="meta">${escapeHtml(v.telefono_whatsapp || '')} · ${escapeHtml(v.fecha_venta)} · total
+              <input data-total value="${v.total}" type="number" step="0.01" style="width:7rem" />
+            </div>
+            <table>
+              <thead><tr><th>Producto</th><th>Cant.</th><th>Subtotal</th></tr></thead>
+              <tbody>${itemsRows}</tbody>
+            </table>
+            <div class="actions">
+              <button type="button" data-save="${v.id}" class="secondary">Guardar edición</button>
+              <button type="button" data-approve="${v.id}">Aprobar y avisar</button>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    function collectEdits(id) {
+      const card = document.getElementById('card-' + id);
+      const total = Number(card.querySelector('[data-total]').value);
+      const rows = {};
+      card.querySelectorAll('tbody input').forEach((inp) => {
+        const i = inp.getAttribute('data-i');
+        const f = inp.getAttribute('data-f');
+        rows[i] = rows[i] || {};
+        rows[i][f] = inp.value;
+      });
+      const items = Object.keys(rows).sort((a,b)=>a-b).map((k) => ({
+        descripcion: rows[k].desc,
+        cantidad: Number(rows[k].cant),
+        subtotal: Number(rows[k].sub),
+        precio_unitario: Number(rows[k].cant) ? Number(rows[k].sub) / Number(rows[k].cant) : 0,
+      }));
+      return { total, items };
+    }
+
+    async function save(id) {
+      const body = collectEdits(id);
+      const res = await fetch('/admin/api/ventas/' + id, {
+        method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
+      });
+      if (!res.ok) { alert('Error al guardar: ' + res.status); return; }
+      statusEl.textContent = 'Guardado ' + id.slice(0, 8) + '…';
+    }
+
+    async function approve(id) {
+      await save(id);
+      const res = await fetch('/admin/api/ventas/' + id + '/aprobar', {
+        method: 'POST', headers: authHeaders(), body: '{}',
+      });
+      if (!res.ok) { alert('Error al aprobar: ' + res.status); return; }
+      document.getElementById('card-' + id)?.remove();
+      statusEl.textContent = 'Aprobada y notificada';
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    document.getElementById('btnLoad').addEventListener('click', load);
+  </script>
+</body>
+</html>

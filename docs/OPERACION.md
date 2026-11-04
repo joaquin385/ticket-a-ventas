@@ -13,31 +13,27 @@ Este documento describe qué está automatizado por IA y el sistema, versus qué
 - **Costo**: ~USD 0.02 por foto (API de GPT-4V) + storage mínimo
 
 ### 2. Resúmenes Semanales
-- **Qué hace**: Cada domingo a las 20:00, envía reporte automático a cada comercio
-- **Contenido**: 
-  - Total vendido en la semana
-  - Promedio diario
-  - Top 5 productos más vendidos
-  - Medio de pago predominante
-- **Intervención humana**: Ninguna
-- **Monitoreo**: revisar logs por si algún envío falló
+- **Qué hace**:
+  - On-demand: el comercio escribe `resumen` por WhatsApp
+  - Programado: cron externo llama `POST /api/jobs/resumen-semanal` los **lunes** (Bearer `JOBS_API_TOKEN`) con la semana lun–dom previa
+- **Contenido**: total vendido, #ventas, ticket promedio, top productos, comparación vs semana anterior, medio de pago
+- **Intervención humana**: ninguna (revisar logs / respuesta del job si `errores > 0`)
 
 ### 3. Forecast Mensual
-- **Qué hace**: Último día del mes, proyecta ventas del próximo mes
-- **Contenido**:
-  - Proyección de ventas totales
-  - Días pico esperados
-  - Sugerencias de stock (si hay data suficiente)
-- **Intervención humana**: Ninguna en fase 1
-- **Mejora futura**: modelo ML más sofisticado
+- **Qué hace**: on-demand con `pronostico` / `pronóstico` por WhatsApp
+- **Contenido**: ventas a la fecha, promedio diario, proyección del mes, rango estimado, día pico
+- **Intervención humana**: ninguna en fase 1
+- **Mejora futura**: job de fin de mes + modelo ML más sofisticado
 
 ### 4. Cobros y Renovaciones
-- **Qué hace**: Mercado Pago cobra automáticamente cada mes
+- **Qué hace**:
+  - Trial automático (14 días o 30 fotos)
+  - Preapproval Mercado Pago; link por WhatsApp (`suscribirme` / al vencer trial)
+  - Webhook `/webhooks/mercadopago` actualiza estado (`activa` / `pausada` / `cancelada` / `en_mora`)
 - **Flujo**:
-  1. MP intenta cobrar
-  2. Si exitoso: webhook actualiza DB, resetea contador de fotos, envía confirmación
-  3. Si falla: reintenta 3 veces en 7 días
-  4. Si sigue fallando: marca suscripción como "vencida", envía notificación
+  1. MP cobra el preapproval
+  2. Webhook (firma `x-signature`) → estado `activa`, reset contador mensual
+  3. Si falla / mora → `en_mora` y se bloquean fotos nuevas con link de pago
 - **Intervención humana**: Solo si cliente pide factura o tiene problema de pago recurrente
 
 ### 5. Control de Límites

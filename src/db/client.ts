@@ -39,9 +39,16 @@ export function getPool(): Pool {
  * @param params - Array de parámetros
  * @returns Resultado de la query
  */
-export async function query<T = any>(text: string, params?: any[]) {
+export async function query<T = Record<string, unknown>>(
+  text: string,
+  params?: unknown[]
+): Promise<{ rows: T[]; rowCount: number | null }> {
   const pool = getPool();
-  return pool.query<T>(text, params);
+  const result = await pool.query(text, params);
+  return {
+    rows: result.rows as T[],
+    rowCount: result.rowCount,
+  };
 }
 
 /**

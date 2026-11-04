@@ -4,300 +4,176 @@ Este roadmap está pensado para que Joaquín construya el proyecto paso a paso e
 
 ---
 
-## Milestone 1: Webhook de WhatsApp
+## Milestone 1: Webhook de WhatsApp — ✅ HECHO
 
 **Objetivo**: Recibir mensajes de WhatsApp y verificar que el webhook funciona.
 
-### Archivos a crear/modificar:
-- `src/index.ts` - servidor Express
-- `src/whatsapp/webhook.ts` - handlers GET (verify) y POST (receive)
-- `src/whatsapp/webhook.test.ts` - tests unitarios
-- `.env` - agregar `WHATSAPP_VERIFY_TOKEN` y `PORT`
+### Entregado
+- `src/index.ts` — servidor Express (`npm run dev`)
+- `src/whatsapp/webhook.ts` — verify + receive + descarga de imágenes
+- `src/whatsapp/signature.ts` — `X-Hub-Signature-256` con `WHATSAPP_APP_SECRET`
+- `src/whatsapp/media.ts` — Graph API media download + `MockMediaClient`
+- `src/whatsapp/routes.ts` — GET/POST `/webhook`, `/health`
+- Sin token → mock (tests y local sin Meta)
 
-### Tareas:
-1. Crear servidor Express en puerto configurable
-2. Implementar endpoint GET `/webhook` para verificación
-   - Validar `hub.mode`, `hub.verify_token`, `hub.challenge`
-   - Retornar challenge si válido
-3. Implementar endpoint POST `/webhook` para recibir mensajes
-   - Loguear payload completo
-   - Retornar 200 OK siempre (aunque no proceses nada aún)
-4. Tests:
-   - Verificación exitosa con token correcto
-   - Rechazo con token incorrecto
-   - Recepción de mensaje dummy
+### Criterio de aceptación: cumplido
+- `npm test` pasa; GET verify; POST recibe y valida firma
 
-### Criterio de aceptación:
-- `npm test` pasa
-- Servidor levanta con `npm run dev`
-- Endpoint GET responde correctamente
-- Endpoint POST recibe y loguea payload
-
-### Siguientes pasos:
-- Configurar webhook en WhatsApp Cloud API con URL de ngrok
-- Probar con mensaje real desde WhatsApp
+### Para ir a producción (M1)
+1. App en [Meta for Developers](https://developers.facebook.com) con producto WhatsApp
+2. Número de WhatsApp Business + `WHATSAPP_PHONE_NUMBER_ID`
+3. `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`
+4. URL pública (ngrok/Railway) apuntando a `POST/GET /webhook`
 
 ---
 
-## Milestone 2: Extracción de Datos (Mock)
+## Milestone 2: Extracción con Vision LLM — ✅ HECHO
 
-**Objetivo**: Procesar foto recibida y extraer datos con implementación mockeada del LLM.
+**Objetivo**: Extraer venta estructurada con Vision LLM (JSON + confianza).
 
-### Archivos a crear/modificar:
-- `src/extraction/schema.ts` - Zod schemas para venta extraída
-- `src/extraction/extractor.ts` - interfaz + implementación mock
-- `src/extraction/extractor.test.ts` - tests con casos de ejemplo
-- `src/whatsapp/webhook.ts` - integrar extracción en POST handler
+### Entregado
+- `src/extraction/schema.ts` — Zod + `requiereRevision`
+- `src/extraction/extractor.ts` — `IExtractor`, `MockExtractor`, `VisionLLMExtractor` (OpenAI-compatible)
+- `src/extraction/prompt.ts` — system prompt + JSON schema estricto
+- Fixtures: `fixtures/venta-alta-confianza.json`, `venta-baja-confianza.json`
+- Sin `VISION_API_KEY` → `MockExtractor`
 
-### Tareas:
-1. Definir schemas Zod:
-   - `ItemVentaSchema`
-   - `VentaExtractedSchema`
-2. Crear interfaz `IExtractor` con método `extract(imageUrl: string): Promise<VentaExtracted>`
-3. Implementar `MockExtractor` que retorna datos hardcodeados con confianza 0.95
-4. Integrar en webhook:
-   - Detectar mensajes con imagen
-   - Extraer media URL (simulado por ahora)
-   - Llamar a extractor
-   - Loguear resultado
-5. Tests:
-   - Schema valida JSON correcto
-   - Schema rechaza JSON inválido (sin fecha, items vacíos, confianza > 1)
-   - MockExtractor retorna datos válidos
+### Criterio de aceptación: cumplido
+- Extracción validada con Zod; flag baja confianza; tests con fetch mockeado
 
-### Criterio de aceptación:
-- Todos los tests pasan
-- Webhook detecta mensajes de imagen
-- Extracción mock funciona y valida con Zod
-
-### Siguientes pasos:
-- Implementar `VisionLLMExtractor` real con OpenAI/Claude
+### Para ir a producción (M2)
+1. API key de un proveedor OpenAI-compatible (OpenAI, Azure, Groq, etc.)
+2. `VISION_API_KEY`, `VISION_API_PROVIDER=openai`, `VISION_API_BASE_URL`, `VISION_MODEL` (ej. `gpt-4o`)
 
 ---
 
-## Milestone 3: Almacenamiento y Respuesta
+## Milestone 3: Almacenamiento y Respuesta — ✅ HECHO
 
-**Objetivo**: Guardar ventas en base de datos y responder al usuario por WhatsApp.
+**Objetivo**: Persistencia Neon + fotos en R2 + reply por WhatsApp.
 
-### Archivos a crear/modificar:
-- `prisma/schema.prisma` - modelo de datos
-- `src/db/repositories/ventaRepository.ts` - CRUD de ventas
-- `src/db/repositories/fotoRepository.ts` - CRUD de fotos
-- `src/whatsapp/sender.ts` - envío de mensajes por WhatsApp API
-- `src/services/ventaService.ts` - lógica de negocio
-- Tests correspondientes
+### Entregado
+- Repositorios SQL vía `src/db/client.ts` (Neon) + memoria si no hay `DATABASE_URL`
+  - `comercioRepository`, `fotoRepository`, `ventaRepository`
+- `migrations/002_create_tables.sql` — schema completo
+- `src/storage/storage.ts` — `IStorage`, `MockStorage`, `CloudflareR2Storage`
+- `src/whatsapp/sender.ts` — Graph send + mock
+- `src/services/ventaService.ts` — pipeline: foto → R2 → extract → DB → reply
+- Resumen en español: `✅ Registré tu venta...` / `📸 Recibí tu foto, la revisamos...`
 
-### Tareas:
-1. Setup Prisma:
-   - Definir modelos: `Comercio`, `Foto`, `Venta`, `Item`
-   - Migración inicial
-2. Crear repositories:
-   - `crearVenta(data)`, `obtenerVentasPorComercio(comercioId, desde, hasta)`
-   - `guardarFoto(data)`, `actualizarEstadoFoto(fotoId, estado)`
-3. Implementar cliente WhatsApp:
-   - `enviarMensaje(telefono, texto)`
-   - Autenticación con `WHATSAPP_ACCESS_TOKEN`
-4. Integrar en flujo webhook:
-   - Guardar foto recibida
-   - Extraer datos
-   - Guardar venta + items
-   - Generar resumen: "✅ Registré tu venta: $X en Y items (fecha Z)"
-   - Enviar respuesta al usuario
-5. Manejo de confianza baja:
-   - Si `confianza < 0.7`: marcar `requiere_revision`
-   - Responder: "📸 Recibí tu foto, la revisamos y te confirmamos"
+### Criterio de aceptación: cumplido
+- Repos + sender + pipeline e2e en tests con mocks
+- Sin Prisma: SQL puro + Neon (alineado al stack del repo)
 
-### Criterio de aceptación:
-- DB setup exitoso con `npx prisma migrate dev`
-- Tests de repositories pasan (con DB en memoria o test DB)
-- Tests de sender mockean API de WhatsApp
-- Flujo end-to-end: recibir → extraer → guardar → responder
+### Para ir a producción (M3) — credenciales necesarias
+| Servicio | Qué crear | Variables |
+|----------|-----------|-----------|
+| **Meta / WhatsApp** | App + número WA Business | `WHATSAPP_*` (ver M1) |
+| **Neon** | Proyecto Postgres + pooler | `DATABASE_URL` (correr `migrations/*.sql`) |
+| **Vision LLM** | API key OpenAI-compatible | `VISION_API_*` (ver M2) |
+| **Cloudflare R2** | Bucket + API token S3 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` |
+
+Sin estas variables el servidor corre en **modo mock** (útil para desarrollo y `npm test`).
 
 ---
 
-## Milestone 4: Exportación CSV/Excel
+## Milestone 4: Exportación CSV/Excel — ✅ HECHO
 
 **Objetivo**: Usuario puede solicitar exportar sus ventas a archivo.
 
-### Archivos a crear/modificar:
-- `src/services/exportService.ts` - generación de CSV/Excel
-- `src/whatsapp/commands.ts` - parser de comandos por texto
-- `src/whatsapp/webhook.ts` - detectar comando "exportar"
-- Tests
+### Entregado
+- `src/services/exportService.ts` — CSV + Excel (hojas **Ventas** y **Totales**), columnas en español, montos ARS
+- `src/whatsapp/commands.ts` — `exportar` / `exportar mes` / `exportar semana` / `exportar csv`
+- `src/whatsapp/documentSender.ts` — upload media Graph API + envío documento (mock en tests)
+- `src/services/exportHandler.ts` — orquesta WhatsApp → archivo
+- `GET /api/export` — Bearer `EXPORT_API_TOKEN`, query `comercio_id`, `desde`, `hasta`, `formato`
 
-### Tareas:
-1. Implementar generación de archivos:
-   - `generarCSV(ventasConItems)` → buffer o path
-   - `generarExcel(ventasConItems)` → buffer o path
-   - Columnas: Fecha | Hora | Producto | Cantidad | Precio Unit. | Subtotal | Total Venta | Medio Pago
-2. Parser de comandos:
-   - Detectar "exportar", "exportar semana", "exportar mes"
-   - Mapear a rango de fechas
-3. Integrar en webhook:
-   - Si mensaje de texto contiene comando
-   - Obtener ventas del rango
-   - Generar archivo
-   - Subir a Cloudflare R2 o storage temporal
-   - Enviar link al usuario por WhatsApp
-4. Tests:
-   - Generación de CSV con datos dummy
-   - Parsing de comandos
-   - Flujo completo con mock de storage
+### Criterio de aceptación: cumplido
+- WhatsApp: "exportar mes" → responde con archivo `.xlsx`/`.csv` (documento vía Graph / mock)
+- HTTP autenticado descarga el mismo export
+- Archivo incluye ítems + hoja/sección Totales
 
-### Criterio de aceptación:
-- Usuario envía "exportar mes" por WhatsApp
-- Recibe link descargable con archivo Excel/CSV
-- Archivo contiene todas las ventas del mes con items
+### Uso
+```text
+WhatsApp: exportar | exportar mes | exportar semana | exportar mes csv
+HTTP: GET /api/export?comercio_id=...&desde=YYYY-MM-DD&hasta=YYYY-MM-DD&formato=xlsx
+      Authorization: Bearer $EXPORT_API_TOKEN
+```
 
 ---
 
-## Milestone 5: Resúmenes Semanales y Forecast Mensual
+## Milestone 5: Resúmenes Semanales y Forecast Mensual — ✅ HECHO
 
-**Objetivo**: Automatizar envío de insights sin que el usuario lo pida.
+**Objetivo**: Insights on-demand y job programable de resumen semanal.
 
-### Archivos a crear/modificar:
-- `src/services/resumenService.ts` - cálculo de métricas
-- `src/services/forecastService.ts` - proyección de ventas
-- `src/jobs/resumenSemanal.ts` - cron job
-- `src/jobs/forecastMensual.ts` - cron job
-- `src/index.ts` - inicializar cron jobs
-- Tests
+### Entregado
+- `src/services/resumenService.ts` — total, #ventas, ticket promedio, top productos, vs semana anterior
+- `src/services/forecastService.ts` — proyección del mes (promedio diario + día de semana) con rango
+- `src/services/insightsHandler.ts` — WhatsApp `resumen` / `pronostico`|`pronóstico`
+- `POST /api/jobs/resumen-semanal` — Bearer `JOBS_API_TOKEN` (lunes → semana lun–dom previa)
+- `migrations/003_envios_programados.sql` — tabla opcional de auditoría (no aplicada a Neon desde el agente)
 
-### Tareas:
-1. Servicio de resumen semanal:
-   - Obtener ventas últimos 7 días por comercio
-   - Calcular: total vendido, promedio diario, top 5 productos, medio de pago más usado
-   - Formatear mensaje bonito con emojis
-2. Servicio de forecast:
-   - Obtener ventas últimos 3 meses
-   - Calcular promedio diario y variación
-   - Proyectar próximo mes
-   - Identificar días de la semana con más venta
-3. Cron jobs:
-   - Resumen: todos los domingos a las 20:00
-   - Forecast: último día del mes a las 18:00
-4. Por cada comercio activo:
-   - Generar reporte
-   - Enviar por WhatsApp
-   - Loguear envío
-5. Tests:
-   - Cálculo de métricas con datos fixture
-   - Formateo de mensajes
-   - Mock de envío
+### Uso
+```text
+WhatsApp: resumen
+WhatsApp: pronostico | pronóstico
+Cron (lunes): POST /api/jobs/resumen-semanal
+  Authorization: Bearer $JOBS_API_TOKEN
+  body/query opcional: { "fecha": "2024-11-11T12:00:00Z" }
+```
 
-### Criterio de aceptación:
-- Cron configurado y probado localmente (forzar ejecución)
-- Mensajes bien formateados y útiles
-- Tests pasan
+### Criterio de aceptación: cumplido
+- Cálculos + mensajes ES rioplatense + job HTTP testeado con mocks
 
 ---
 
-## Milestone 6: Integración de Billing (Mercado Pago)
+## Milestone 6: Integración de Billing (Mercado Pago) — ✅ HECHO
 
-**Objetivo**: Cobrar suscripciones recurrentes y controlar límites de uso.
+**Objetivo**: Cobrar suscripciones recurrentes (preapproval) y controlar trial/límites.
 
-### Archivos a crear/modificar:
-- `prisma/schema.prisma` - modelo `Suscripcion`
-- `src/services/suscripcionService.ts` - lógica de planes y límites
-- `src/mercadopago/preapproval.ts` - crear/cancelar suscripciones
-- `src/mercadopago/webhook.ts` - recibir notificaciones de pago
-- `src/middleware/verificarLimites.ts` - controlar fotos/mes
-- `src/routes/checkout.ts` - endpoint para iniciar suscripción
-- Tests
+### Entregado
+- Trial: **14 días o 30 fotos** (lo que ocurra primero) — `TRIAL_DAYS` / `TRIAL_PHOTOS`
+- Precio mensual configurable: `SUBSCRIPTION_PRICE_ARS` (default **7000**)
+- `SuscripcionService` + `MockMercadoPagoClient` / cliente real preapproval
+- WhatsApp: `suscribirme` / `pagar` → link; `estado` / `mi plan` → estado del plan
+- Gate en fotos: sin trial vigente ni plan activo → mensaje amable + link
+- `POST /webhooks/mercadopago` con validación `x-signature`
+- Estados: `trial` | `activa` | `pausada` | `cancelada` | `en_mora`
+- `migrations/004_suscripciones_billing.sql` (no aplicada a Neon)
 
-### Tareas:
-1. Modelo de suscripciones:
-   - Campos: plan, estado (trial, activa, vencida, cancelada), fechas, límites
-2. Crear preapproval en Mercado Pago:
-   - Endpoint `/checkout` que genera link de pago
-   - Auto subscription con monto mensual
-3. Webhook de Mercado Pago:
-   - Recibir notificaciones de pago exitoso/fallido
-   - Actualizar estado de suscripción
-   - Resetear contador de fotos al cobrar
-4. Middleware de límites:
-   - Antes de procesar foto: verificar que no superó el plan
-   - Si superó: responder "⚠️ Alcanzaste el límite de tu plan. Upgrade o esperá el próximo ciclo"
-5. Trial automático:
-   - Nuevos comercios arrancan en trial (14 días o 30 fotos)
-   - Al vencer, enviar reminder de suscripción
-6. Tests:
-   - Creación de preapproval (mock SDK MP)
-   - Procesamiento de webhook
-   - Lógica de límites
+### Uso
+```text
+WhatsApp: suscribirme | pagar | estado | mi plan
+Webhook MP: POST /webhooks/mercadopago  (x-signature + x-request-id)
+Cron tip: al vencer trial el próximo ticket dispara el link solo.
+```
 
-### Criterio de aceptación:
-- Usuario nuevo puede usar 30 fotos gratis
-- Después recibe mensaje para suscribirse
-- Link de pago funciona (sandbox MP)
-- Webhook actualiza estado correctamente
-- Límite se respeta y resetea al cobrar
+### Env
+`MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `SUBSCRIPTION_PRICE_ARS`, `TRIAL_DAYS`, `TRIAL_PHOTOS`
 
 ---
 
-## Milestone 7: Cola de Revisión (Low Confidence)
+## Milestone 7: Cola de Revisión (Low Confidence) — ✅ HECHO
 
-**Objetivo**: Admin puede revisar y corregir ventas con baja confianza.
+**Objetivo**: Admin revisa ventas de baja confianza.
 
-### Archivos a crear/modificar:
-- `src/routes/admin.ts` - endpoints REST para dashboard
-- `src/services/revisionService.ts` - marcar como revisada, editar venta
-- `src/admin/dashboard.html` - página web simple con tabla
-- Tests
-
-### Tareas:
-1. Endpoints admin:
-   - `GET /admin/ventas/revision` → lista de ventas con `requiere_revision=true`
-   - `PUT /admin/ventas/:id` → actualizar items/total
-   - `POST /admin/ventas/:id/aprobar` → marcar como revisada
-2. Dashboard HTML minimalista:
-   - Tabla con foto, datos extraídos, confianza
-   - Botones "Aprobar" / "Editar"
-   - Formulario inline para corregir items
-3. Notificar al usuario cuando se aprueba:
-   - Enviar WhatsApp con datos finales
-4. Tests:
-   - CRUD de revisión
-   - Autorización básica (admin token)
-
-### Criterio de aceptación:
-- Admin puede ver lista de ventas pendientes
-- Puede aprobar o editar
-- Usuario recibe confirmación post-revisión
+### Entregado
+- `GET /admin` — HTML de cola (`public/admin/index.html`)
+- `GET /admin/api/ventas/revision` · `PUT /admin/api/ventas/:id` · `POST .../aprobar`
+- Auth: Bearer `ADMIN_API_TOKEN`
+- Al aprobar: WhatsApp al comercio con el resumen confirmado
 
 ---
 
-## Milestone 8: Landing Page y Onboarding
+## Milestone 8: Landing + Go-live — ✅ HECHO
 
-**Objetivo**: Página pública para atraer usuarios y flow de alta.
+**Objetivo**: Landing pública y checklist para salir a producción (aún sin cuentas creadas).
 
-### Archivos a crear/modificar:
-- `public/index.html` - landing page
-- `src/routes/onboarding.ts` - alta de comercio
-- `src/services/onboardingService.ts` - crear comercio + enviar mensaje bienvenida
-- Tests
-
-### Tareas:
-1. Landing page:
-   - Hero: problema + solución
-   - Cómo funciona (3 pasos con ilustraciones)
-   - Precios
-   - Testimonios (placeholder)
-   - CTA: "Empezar gratis" → link de WhatsApp con mensaje pre-rellenado
-2. Flow de onboarding:
-   - Usuario manda mensaje inicial (ej: "Hola")
-   - Bot responde: "¡Hola! Para empezar, ¿cuál es el nombre de tu comercio?"
-   - Chatbot simple recolecta: nombre, tipo de comercio, ubicación
-   - Crea registro en DB
-   - Responde: "Listo! Ahora mandame una foto de un ticket para probar"
-3. Tests:
-   - Conversación de onboarding con fixture
-   - Creación de comercio
-
-### Criterio de aceptación:
-- Landing se ve bien en mobile
-- Flujo de alta funciona end-to-end
-- Nuevo comercio queda registrado y puede usar el bot
+### Entregado
+- `landing/` — HTML estático (Cloudflare Pages) + `GET /landing` en la API
+- Propuesta de valor, cómo funciona, **ARS 7.000/mes**, trial 14d/30 fotos, FAQ, CTA `wa.me` (`LANDING_WHATSAPP_NUMBER`)
+- `Dockerfile` + `fly.toml` + `render.yaml` + healthcheck `/health`
+- `docs/GO_LIVE.md` — alta de cuentas, migraciones 001–004, env vars, cron lunes
+- `npm run smoke` — smoke post-deploy
 
 ---
 
