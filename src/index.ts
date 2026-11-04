@@ -1,7 +1,7 @@
 /**
  * Punto de entrada principal de Ticket a Ventas
  *
- * M1–M6: webhook, extracción, persistencia, export, insights, billing MP
+ * M1–M8: webhook → extracción → persistencia → export → insights → billing → admin → landing
  */
 
 import express from 'express';
@@ -22,6 +22,9 @@ import { BillingHandler } from './services/billingHandler.js';
 import { registerExportRoutes } from './routes/exportRoutes.js';
 import { registerJobsRoutes } from './routes/jobsRoutes.js';
 import { registerMercadoPagoRoutes } from './routes/mercadopagoRoutes.js';
+import { registerAdminRoutes } from './routes/adminRoutes.js';
+import { registerLandingRoutes } from './routes/landingRoutes.js';
+import { RevisionService } from './services/revisionService.js';
 import { parsearComando } from './whatsapp/commands.js';
 
 export const APP_VERSION = '0.1.0';
@@ -98,6 +101,8 @@ export function createApp() {
     precioMensualArs: config.billing.precioMensualArs,
   });
 
+  const revisionService = new RevisionService({ repos, sender });
+
   registerWebhookRoutes(app, {
     config,
     mediaClient,
@@ -164,6 +169,15 @@ export function createApp() {
     webhookSecret: config.mercadopago.webhookSecret,
   });
 
+  registerAdminRoutes(app, {
+    revisionService,
+    adminApiToken: config.adminApiToken,
+  });
+
+  registerLandingRoutes(app, {
+    whatsappNumber: config.landingWhatsappNumber,
+  });
+
   return {
     app,
     config,
@@ -171,6 +185,7 @@ export function createApp() {
     exportHandler,
     insightsHandler,
     billingHandler,
+    revisionService,
     suscripciones,
     repos,
     storage,
@@ -208,6 +223,9 @@ if (isMain) {
     }
     if (!config.jobsApiToken) {
       console.warn('POST /api/jobs/* requiere JOBS_API_TOKEN');
+    }
+    if (!config.adminApiToken) {
+      console.warn('GET /admin/api/* requiere ADMIN_API_TOKEN');
     }
   });
 }

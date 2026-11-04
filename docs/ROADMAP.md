@@ -152,69 +152,28 @@ Cron tip: al vencer trial el próximo ticket dispara el link solo.
 
 ---
 
-## Milestone 7: Cola de Revisión (Low Confidence)
+## Milestone 7: Cola de Revisión (Low Confidence) — ✅ HECHO
 
-**Objetivo**: Admin puede revisar y corregir ventas con baja confianza.
+**Objetivo**: Admin revisa ventas de baja confianza.
 
-### Archivos a crear/modificar:
-- `src/routes/admin.ts` - endpoints REST para dashboard
-- `src/services/revisionService.ts` - marcar como revisada, editar venta
-- `src/admin/dashboard.html` - página web simple con tabla
-- Tests
-
-### Tareas:
-1. Endpoints admin:
-   - `GET /admin/ventas/revision` → lista de ventas con `requiere_revision=true`
-   - `PUT /admin/ventas/:id` → actualizar items/total
-   - `POST /admin/ventas/:id/aprobar` → marcar como revisada
-2. Dashboard HTML minimalista:
-   - Tabla con foto, datos extraídos, confianza
-   - Botones "Aprobar" / "Editar"
-   - Formulario inline para corregir items
-3. Notificar al usuario cuando se aprueba:
-   - Enviar WhatsApp con datos finales
-4. Tests:
-   - CRUD de revisión
-   - Autorización básica (admin token)
-
-### Criterio de aceptación:
-- Admin puede ver lista de ventas pendientes
-- Puede aprobar o editar
-- Usuario recibe confirmación post-revisión
+### Entregado
+- `GET /admin` — HTML de cola (`public/admin/index.html`)
+- `GET /admin/api/ventas/revision` · `PUT /admin/api/ventas/:id` · `POST .../aprobar`
+- Auth: Bearer `ADMIN_API_TOKEN`
+- Al aprobar: WhatsApp al comercio con el resumen confirmado
 
 ---
 
-## Milestone 8: Landing Page y Onboarding
+## Milestone 8: Landing + Go-live — ✅ HECHO
 
-**Objetivo**: Página pública para atraer usuarios y flow de alta.
+**Objetivo**: Landing pública y checklist para salir a producción (aún sin cuentas creadas).
 
-### Archivos a crear/modificar:
-- `public/index.html` - landing page
-- `src/routes/onboarding.ts` - alta de comercio
-- `src/services/onboardingService.ts` - crear comercio + enviar mensaje bienvenida
-- Tests
-
-### Tareas:
-1. Landing page:
-   - Hero: problema + solución
-   - Cómo funciona (3 pasos con ilustraciones)
-   - Precios
-   - Testimonios (placeholder)
-   - CTA: "Empezar gratis" → link de WhatsApp con mensaje pre-rellenado
-2. Flow de onboarding:
-   - Usuario manda mensaje inicial (ej: "Hola")
-   - Bot responde: "¡Hola! Para empezar, ¿cuál es el nombre de tu comercio?"
-   - Chatbot simple recolecta: nombre, tipo de comercio, ubicación
-   - Crea registro en DB
-   - Responde: "Listo! Ahora mandame una foto de un ticket para probar"
-3. Tests:
-   - Conversación de onboarding con fixture
-   - Creación de comercio
-
-### Criterio de aceptación:
-- Landing se ve bien en mobile
-- Flujo de alta funciona end-to-end
-- Nuevo comercio queda registrado y puede usar el bot
+### Entregado
+- `landing/` — HTML estático (Cloudflare Pages) + `GET /landing` en la API
+- Propuesta de valor, cómo funciona, **ARS 7.000/mes**, trial 14d/30 fotos, FAQ, CTA `wa.me` (`LANDING_WHATSAPP_NUMBER`)
+- `Dockerfile` + `fly.toml` + `render.yaml` + healthcheck `/health`
+- `docs/GO_LIVE.md` — alta de cuentas, migraciones 001–004, env vars, cron lunes
+- `npm run smoke` — smoke post-deploy
 
 ---
 

@@ -97,8 +97,8 @@ El proyecto está pensado para ser construido por pasos. Ver el roadmap completo
 5. ✅ Exportación CSV/Excel (WhatsApp + GET /api/export)
 6. ✅ Resumen semanal + pronóstico mensual (WhatsApp + job lunes)
 7. ✅ Billing Mercado Pago (trial 14d/30 fotos + preapproval)
-8. Cola de revisión para baja confianza
-9. Landing page y onboarding
+8. ✅ Cola admin de revisión (`/admin`)
+9. ✅ Landing + go-live (Docker/Fly/Render, `docs/GO_LIVE.md`)
 
 ## Cómo Correr Localmente
 
@@ -143,6 +143,8 @@ Ver `.env.example`. Resumen:
 | Jobs / cron | `JOBS_API_TOKEN` (o `EXPORT_API_TOKEN`) | `POST /api/jobs/*` responde 401 |
 | Mercado Pago | `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET` | Cliente mock |
 | Billing | `SUBSCRIPTION_PRICE_ARS` (default 7000), `TRIAL_DAYS`, `TRIAL_PHOTOS` | Trial 14d / 30 fotos |
+| Admin | `ADMIN_API_TOKEN` | `/admin/api` → 401 |
+| Landing | `LANDING_WHATSAPP_NUMBER` | CTA wa.me |
 
 ### Credenciales para ir a producción
 
@@ -155,6 +157,19 @@ Ver `.env.example`. Resumen:
 ## Operación y Automatización
 
 Ver [docs/OPERACION.md](docs/OPERACION.md) para entender qué está automatizado y qué requiere intervención manual (~1h/día).
+
+## Salir a producción
+
+Checklist completo (crear cuentas, migraciones Neon, env vars, cron): **[docs/GO_LIVE.md](docs/GO_LIVE.md)**.
+
+```bash
+# Build & Docker
+npm run build
+docker build -t ticket-a-ventas .
+
+# Smoke post-deploy
+BASE_URL=https://tu-dominio npm run smoke
+```
 
 ## Licencia
 

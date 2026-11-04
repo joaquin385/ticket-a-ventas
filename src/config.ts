@@ -46,6 +46,10 @@ export type AppConfig = {
     trialDias: number;
     trialFotos: number;
   };
+  /** Bearer para /admin/api/* */
+  adminApiToken: string | null;
+  /** Número wa.me de la landing (sin +) */
+  landingWhatsappNumber: string;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -95,6 +99,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       trialDias: Number(env.TRIAL_DAYS ?? 14),
       trialFotos: Number(env.TRIAL_PHOTOS ?? 30),
     },
+    adminApiToken:
+      env.ADMIN_API_TOKEN || env.API_TOKEN || env.EXPORT_API_TOKEN || null,
+    landingWhatsappNumber:
+      env.LANDING_WHATSAPP_NUMBER || env.WHATSAPP_BUSINESS_NUMBER || '5491100000000',
   };
 }
 
