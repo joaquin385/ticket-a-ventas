@@ -12,6 +12,8 @@ export interface IComercioRepository {
     nombre?: string
   ): Promise<{ comercio: Comercio; usuario: Usuario; creado: boolean }>;
   obtenerPorId(id: string): Promise<Comercio | null>;
+  /** Comercios con activo=true (para jobs programados) */
+  listarActivos(): Promise<Comercio[]>;
 }
 
 export class MemoryComercioRepository implements IComercioRepository {
@@ -60,6 +62,10 @@ export class MemoryComercioRepository implements IComercioRepository {
 
   async obtenerPorId(id: string): Promise<Comercio | null> {
     return this.store.comercios.get(id) ?? null;
+  }
+
+  async listarActivos(): Promise<Comercio[]> {
+    return [...this.store.comercios.values()].filter((c) => c.activo);
   }
 }
 
@@ -117,6 +123,13 @@ export class PostgresComercioRepository implements IComercioRepository {
       [id]
     );
     return result.rows[0] ? mapComercio(result.rows[0]) : null;
+  }
+
+  async listarActivos(): Promise<Comercio[]> {
+    const result = await query<Comercio>(
+      `SELECT * FROM comercios WHERE activo = true ORDER BY creado_en ASC`
+    );
+    return result.rows.map(mapComercio);
   }
 }
 

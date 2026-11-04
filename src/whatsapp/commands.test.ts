@@ -47,4 +47,14 @@ describe('Comandos WhatsApp', () => {
   it('debería ignorar texto que no es comando', () => {
     expect(parsearComando('hola').tipo).toBe('desconocido');
   });
+
+  it('debería parsear resumen', () => {
+    expect(parsearComando('resumen').tipo).toBe('resumen');
+    expect(parsearComando('Resumen semanal').tipo).toBe('resumen');
+  });
+
+  it('debería parsear pronóstico con tilde', () => {
+    expect(parsearComando('pronóstico').tipo).toBe('pronostico');
+    expect(parsearComando('pronostico').tipo).toBe('pronostico');
+  });
 });

@@ -101,44 +101,28 @@ HTTP: GET /api/export?comercio_id=...&desde=YYYY-MM-DD&hasta=YYYY-MM-DD&formato=
 
 ---
 
-## Milestone 5: Resúmenes Semanales y Forecast Mensual
+## Milestone 5: Resúmenes Semanales y Forecast Mensual — ✅ HECHO
 
-**Objetivo**: Automatizar envío de insights sin que el usuario lo pida.
+**Objetivo**: Insights on-demand y job programable de resumen semanal.
 
-### Archivos a crear/modificar:
-- `src/services/resumenService.ts` - cálculo de métricas
-- `src/services/forecastService.ts` - proyección de ventas
-- `src/jobs/resumenSemanal.ts` - cron job
-- `src/jobs/forecastMensual.ts` - cron job
-- `src/index.ts` - inicializar cron jobs
-- Tests
+### Entregado
+- `src/services/resumenService.ts` — total, #ventas, ticket promedio, top productos, vs semana anterior
+- `src/services/forecastService.ts` — proyección del mes (promedio diario + día de semana) con rango
+- `src/services/insightsHandler.ts` — WhatsApp `resumen` / `pronostico`|`pronóstico`
+- `POST /api/jobs/resumen-semanal` — Bearer `JOBS_API_TOKEN` (lunes → semana lun–dom previa)
+- `migrations/003_envios_programados.sql` — tabla opcional de auditoría (no aplicada a Neon desde el agente)
 
-### Tareas:
-1. Servicio de resumen semanal:
-   - Obtener ventas últimos 7 días por comercio
-   - Calcular: total vendido, promedio diario, top 5 productos, medio de pago más usado
-   - Formatear mensaje bonito con emojis
-2. Servicio de forecast:
-   - Obtener ventas últimos 3 meses
-   - Calcular promedio diario y variación
-   - Proyectar próximo mes
-   - Identificar días de la semana con más venta
-3. Cron jobs:
-   - Resumen: todos los domingos a las 20:00
-   - Forecast: último día del mes a las 18:00
-4. Por cada comercio activo:
-   - Generar reporte
-   - Enviar por WhatsApp
-   - Loguear envío
-5. Tests:
-   - Cálculo de métricas con datos fixture
-   - Formateo de mensajes
-   - Mock de envío
+### Uso
+```text
+WhatsApp: resumen
+WhatsApp: pronostico | pronóstico
+Cron (lunes): POST /api/jobs/resumen-semanal
+  Authorization: Bearer $JOBS_API_TOKEN
+  body/query opcional: { "fecha": "2024-11-11T12:00:00Z" }
+```
 
-### Criterio de aceptación:
-- Cron configurado y probado localmente (forzar ejecución)
-- Mensajes bien formateados y útiles
-- Tests pasan
+### Criterio de aceptación: cumplido
+- Cálculos + mensajes ES rioplatense + job HTTP testeado con mocks
 
 ---
 

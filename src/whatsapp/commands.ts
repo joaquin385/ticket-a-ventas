@@ -16,10 +16,25 @@ export type ComandoExportar = {
   formato: FormatoExport;
 };
 
-export type ComandoParseado = ComandoExportar | { tipo: 'desconocido' };
+export type ComandoResumen = { tipo: 'resumen' };
+export type ComandoPronostico = { tipo: 'pronostico' };
+
+export type ComandoParseado =
+  | ComandoExportar
+  | ComandoResumen
+  | ComandoPronostico
+  | { tipo: 'desconocido' };
 
 function toYmd(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+function normalizarTexto(texto: string): string {
+  return texto
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
 }
 
 /**
@@ -46,26 +61,35 @@ export function calcularRango(
     return { desde, hasta, etiqueta: 'mes' };
   }
 
-  // todo: últimos 365 días
   const desdeDate = new Date(ref);
   desdeDate.setUTCFullYear(desdeDate.getUTCFullYear() - 1);
   return { desde: toYmd(desdeDate), hasta, etiqueta: 'año' };
 }
 
 /**
- * Detecta comandos de exportación en texto libre
- *
- * Ejemplos: "exportar", "exportar mes", "exportar semana csv", "EXPORTAR MES"
+ * Detecta comandos: exportar | resumen | pronostico/pronóstico
  */
 export function parsearComando(
   texto: string,
   ref: Date = new Date()
 ): ComandoParseado {
-  const normalizado = texto
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '');
+  const normalizado = normalizarTexto(texto);
+
+  if (
+    normalizado === 'resumen' ||
+    normalizado.startsWith('resumen ') ||
+    normalizado === 'resumen semanal'
+  ) {
+    return { tipo: 'resumen' };
+  }
+
+  if (
+    normalizado === 'pronostico' ||
+    normalizado.startsWith('pronostico ') ||
+    normalizado === 'forecast'
+  ) {
+    return { tipo: 'pronostico' };
+  }
 
   if (!normalizado.startsWith('exportar')) {
     return { tipo: 'desconocido' };
@@ -74,13 +98,19 @@ export function parsearComando(
   const formato: FormatoExport = /\bcsv\b/.test(normalizado) ? 'csv' : 'xlsx';
 
   let periodo: 'hoy' | 'semana' | 'mes' | 'todo' = 'mes';
-  if (/\bhoy\b|\bdia\b|\bdía\b/.test(texto.toLowerCase()) || /\bdia\b/.test(normalizado)) {
+  if (/\bhoy\b|\bdia\b/.test(normalizado)) {
     periodo = 'hoy';
   } else if (/\bsemana\b/.test(normalizado)) {
     periodo = 'semana';
-  } else if (/\bmes\b/.test(normalizado) || normalizado === 'exportar' || normalizado === 'exportar csv' || normalizado === 'exportar excel' || normalizado === 'exportar xlsx') {
+  } else if (
+    /\bmes\b/.test(normalizado) ||
+    normalizado === 'exportar' ||
+    normalizado === 'exportar csv' ||
+    normalizado === 'exportar excel' ||
+    normalizado === 'exportar xlsx'
+  ) {
     periodo = 'mes';
-  } else if (/\ba[nñ]o\b|\btodo\b/.test(normalizado)) {
+  } else if (/\bano\b|\btodo\b/.test(normalizado)) {
     periodo = 'todo';
   }
 

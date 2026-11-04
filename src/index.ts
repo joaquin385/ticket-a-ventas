@@ -1,7 +1,7 @@
 /**
  * Punto de entrada principal de Ticket a Ventas
  *
- * M1 webhook · M2 extracción · M3 persistencia · M4 export
+ * M1–M5: webhook, extracción, persistencia, export, resumen/pronóstico
  */
 
 import express from 'express';
@@ -15,7 +15,10 @@ import { createWhatsAppSender } from './whatsapp/sender.js';
 import { createDocumentSender } from './whatsapp/documentSender.js';
 import { VentaService } from './services/ventaService.js';
 import { ExportHandler } from './services/exportHandler.js';
+import { InsightsHandler } from './services/insightsHandler.js';
 import { registerExportRoutes } from './routes/exportRoutes.js';
+import { registerJobsRoutes } from './routes/jobsRoutes.js';
+import { parsearComando } from './whatsapp/commands.js';
 
 export const APP_VERSION = '0.1.0';
 
@@ -72,6 +75,8 @@ export function createApp() {
     documentSender,
   });
 
+  const insightsHandler = new InsightsHandler({ repos, sender });
+
   registerWebhookRoutes(app, {
     config,
     mediaClient,
@@ -90,15 +95,25 @@ export function createApp() {
     },
     onText: async (from, body) => {
       try {
-        const handled = await exportHandler.manejarTextoWhatsApp(from, body);
-        if (!handled) {
-          console.log('Texto sin comando reconocido:', body);
+        const comando = parsearComando(body);
+        if (comando.tipo === 'resumen') {
+          await insightsHandler.manejarResumen(from);
+          return;
         }
+        if (comando.tipo === 'pronostico') {
+          await insightsHandler.manejarPronostico(from);
+          return;
+        }
+        if (comando.tipo === 'exportar') {
+          await exportHandler.manejarTextoWhatsApp(from, body);
+          return;
+        }
+        console.log('Texto sin comando reconocido:', body);
       } catch (err) {
         console.error('Error procesando comando de texto:', err);
         await sender.enviarMensaje(
           from,
-          'Hubo un error al exportar. Probá de nuevo en un rato.'
+          'Hubo un error procesando tu pedido. Probá de nuevo en un rato.'
         );
       }
     },
@@ -109,11 +124,17 @@ export function createApp() {
     apiToken: config.exportApiToken,
   });
 
+  registerJobsRoutes(app, {
+    insightsHandler,
+    jobsApiToken: config.jobsApiToken,
+  });
+
   return {
     app,
     config,
     ventaService,
     exportHandler,
+    insightsHandler,
     repos,
     storage,
     sender,
@@ -143,6 +164,9 @@ if (isMain) {
     }
     if (!config.exportApiToken) {
       console.warn('GET /api/export requiere EXPORT_API_TOKEN');
+    }
+    if (!config.jobsApiToken) {
+      console.warn('POST /api/jobs/* requiere JOBS_API_TOKEN');
     }
   });
 }
