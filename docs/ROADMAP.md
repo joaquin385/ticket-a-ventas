@@ -126,46 +126,29 @@ Cron (lunes): POST /api/jobs/resumen-semanal
 
 ---
 
-## Milestone 6: Integración de Billing (Mercado Pago)
+## Milestone 6: Integración de Billing (Mercado Pago) — ✅ HECHO
 
-**Objetivo**: Cobrar suscripciones recurrentes y controlar límites de uso.
+**Objetivo**: Cobrar suscripciones recurrentes (preapproval) y controlar trial/límites.
 
-### Archivos a crear/modificar:
-- `prisma/schema.prisma` - modelo `Suscripcion`
-- `src/services/suscripcionService.ts` - lógica de planes y límites
-- `src/mercadopago/preapproval.ts` - crear/cancelar suscripciones
-- `src/mercadopago/webhook.ts` - recibir notificaciones de pago
-- `src/middleware/verificarLimites.ts` - controlar fotos/mes
-- `src/routes/checkout.ts` - endpoint para iniciar suscripción
-- Tests
+### Entregado
+- Trial: **14 días o 30 fotos** (lo que ocurra primero) — `TRIAL_DAYS` / `TRIAL_PHOTOS`
+- Precio mensual configurable: `SUBSCRIPTION_PRICE_ARS` (default **7000**)
+- `SuscripcionService` + `MockMercadoPagoClient` / cliente real preapproval
+- WhatsApp: `suscribirme` / `pagar` → link; `estado` / `mi plan` → estado del plan
+- Gate en fotos: sin trial vigente ni plan activo → mensaje amable + link
+- `POST /webhooks/mercadopago` con validación `x-signature`
+- Estados: `trial` | `activa` | `pausada` | `cancelada` | `en_mora`
+- `migrations/004_suscripciones_billing.sql` (no aplicada a Neon)
 
-### Tareas:
-1. Modelo de suscripciones:
-   - Campos: plan, estado (trial, activa, vencida, cancelada), fechas, límites
-2. Crear preapproval en Mercado Pago:
-   - Endpoint `/checkout` que genera link de pago
-   - Auto subscription con monto mensual
-3. Webhook de Mercado Pago:
-   - Recibir notificaciones de pago exitoso/fallido
-   - Actualizar estado de suscripción
-   - Resetear contador de fotos al cobrar
-4. Middleware de límites:
-   - Antes de procesar foto: verificar que no superó el plan
-   - Si superó: responder "⚠️ Alcanzaste el límite de tu plan. Upgrade o esperá el próximo ciclo"
-5. Trial automático:
-   - Nuevos comercios arrancan en trial (14 días o 30 fotos)
-   - Al vencer, enviar reminder de suscripción
-6. Tests:
-   - Creación de preapproval (mock SDK MP)
-   - Procesamiento de webhook
-   - Lógica de límites
+### Uso
+```text
+WhatsApp: suscribirme | pagar | estado | mi plan
+Webhook MP: POST /webhooks/mercadopago  (x-signature + x-request-id)
+Cron tip: al vencer trial el próximo ticket dispara el link solo.
+```
 
-### Criterio de aceptación:
-- Usuario nuevo puede usar 30 fotos gratis
-- Después recibe mensaje para suscribirse
-- Link de pago funciona (sandbox MP)
-- Webhook actualiza estado correctamente
-- Límite se respeta y resetea al cobrar
+### Env
+`MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `SUBSCRIPTION_PRICE_ARS`, `TRIAL_DAYS`, `TRIAL_PHOTOS`
 
 ---
 

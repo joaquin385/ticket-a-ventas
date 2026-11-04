@@ -19,11 +19,17 @@ import {
   PostgresVentaRepository,
   type IVentaRepository,
 } from './ventaRepository.js';
+import {
+  MemorySuscripcionRepository,
+  PostgresSuscripcionRepository,
+  type ISuscripcionRepository,
+} from './suscripcionRepository.js';
 
 export type Repositories = {
   comercios: IComercioRepository;
   fotos: IFotoRepository;
   ventas: IVentaRepository;
+  suscripciones: ISuscripcionRepository;
   mode: 'memory' | 'postgres';
   store?: MemoryStore;
 };
@@ -38,6 +44,7 @@ export function createRepositories(
       comercios: new MemoryComercioRepository(store),
       fotos: new MemoryFotoRepository(store),
       ventas: new MemoryVentaRepository(store),
+      suscripciones: new MemorySuscripcionRepository(store),
       mode: 'memory',
       store,
     };
@@ -47,6 +54,7 @@ export function createRepositories(
     comercios: new PostgresComercioRepository(),
     fotos: new PostgresFotoRepository(),
     ventas: new PostgresVentaRepository(),
+    suscripciones: new PostgresSuscripcionRepository(),
     mode: 'postgres',
   };
 }
@@ -55,4 +63,5 @@ export type {
   IComercioRepository,
   IFotoRepository,
   IVentaRepository,
+  ISuscripcionRepository,
 };

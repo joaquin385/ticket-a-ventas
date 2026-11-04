@@ -45,8 +45,9 @@ describe('VentaService', () => {
     const result = await service.procesarImagen(imagen);
 
     expect(result.bajaConfianza).toBe(false);
-    expect(result.venta.total).toBe(3850);
-    expect(result.venta.items.length).toBe(3);
+    expect(result.venta).not.toBeNull();
+    expect(result.venta!.total).toBe(3850);
+    expect(result.venta!.items.length).toBe(3);
     expect(result.mensaje).toContain('✅');
 
     expect(store.comercios.size).toBe(1);
@@ -70,7 +71,8 @@ describe('VentaService', () => {
 
     const result = await service.procesarImagen(imagen);
     expect(result.bajaConfianza).toBe(true);
-    expect(result.venta.requiere_revision).toBe(true);
+    expect(result.venta).not.toBeNull();
+    expect(result.venta!.requiere_revision).toBe(true);
     expect(result.mensaje).toContain('revisamos');
 
     const foto = [...store.fotos.values()][0];

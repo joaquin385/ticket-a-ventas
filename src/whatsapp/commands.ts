@@ -18,11 +18,15 @@ export type ComandoExportar = {
 
 export type ComandoResumen = { tipo: 'resumen' };
 export type ComandoPronostico = { tipo: 'pronostico' };
+export type ComandoSuscribirme = { tipo: 'suscribirme' };
+export type ComandoEstado = { tipo: 'estado' };
 
 export type ComandoParseado =
   | ComandoExportar
   | ComandoResumen
   | ComandoPronostico
+  | ComandoSuscribirme
+  | ComandoEstado
   | { tipo: 'desconocido' };
 
 function toYmd(d: Date): string {
@@ -67,7 +71,7 @@ export function calcularRango(
 }
 
 /**
- * Detecta comandos: exportar | resumen | pronostico/pronóstico
+ * Detecta comandos: exportar | resumen | pronostico | suscribirme | estado
  */
 export function parsearComando(
   texto: string,
@@ -89,6 +93,24 @@ export function parsearComando(
     normalizado === 'forecast'
   ) {
     return { tipo: 'pronostico' };
+  }
+
+  if (
+    normalizado === 'suscribirme' ||
+    normalizado === 'pagar' ||
+    normalizado === 'subscribirme' ||
+    normalizado === 'quiero pagar'
+  ) {
+    return { tipo: 'suscribirme' };
+  }
+
+  if (
+    normalizado === 'estado' ||
+    normalizado === 'mi plan' ||
+    normalizado === 'miplan' ||
+    normalizado === 'plan'
+  ) {
+    return { tipo: 'estado' };
   }
 
   if (!normalizado.startsWith('exportar')) {

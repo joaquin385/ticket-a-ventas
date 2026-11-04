@@ -57,4 +57,14 @@ describe('Comandos WhatsApp', () => {
     expect(parsearComando('pronóstico').tipo).toBe('pronostico');
     expect(parsearComando('pronostico').tipo).toBe('pronostico');
   });
+
+  it('debería parsear suscribirme y pagar', () => {
+    expect(parsearComando('suscribirme').tipo).toBe('suscribirme');
+    expect(parsearComando('pagar').tipo).toBe('suscribirme');
+  });
+
+  it('debería parsear estado y mi plan', () => {
+    expect(parsearComando('estado').tipo).toBe('estado');
+    expect(parsearComando('mi plan').tipo).toBe('estado');
+  });
 });

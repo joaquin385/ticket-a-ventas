@@ -36,6 +36,16 @@ export type AppConfig = {
   exportApiToken: string | null;
   /** Token Bearer para POST /api/jobs/* (fallback: EXPORT_API_TOKEN / API_TOKEN) */
   jobsApiToken: string | null;
+  mercadopago: {
+    accessToken: string | null;
+    publicKey: string | null;
+    webhookSecret: string | null;
+  };
+  billing: {
+    precioMensualArs: number;
+    trialDias: number;
+    trialFotos: number;
+  };
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -75,6 +85,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     exportApiToken: env.EXPORT_API_TOKEN || env.API_TOKEN || null,
     jobsApiToken:
       env.JOBS_API_TOKEN || env.EXPORT_API_TOKEN || env.API_TOKEN || null,
+    mercadopago: {
+      accessToken: env.MERCADOPAGO_ACCESS_TOKEN || null,
+      publicKey: env.MERCADOPAGO_PUBLIC_KEY || null,
+      webhookSecret: env.MERCADOPAGO_WEBHOOK_SECRET || null,
+    },
+    billing: {
+      precioMensualArs: Number(env.SUBSCRIPTION_PRICE_ARS ?? 7000),
+      trialDias: Number(env.TRIAL_DAYS ?? 14),
+      trialFotos: Number(env.TRIAL_PHOTOS ?? 30),
+    },
   };
 }
 

@@ -39,10 +39,10 @@ Todo automatizado con inteligencia artificial. Sin tipear nada.
 
 | Plan | Precio | Fotos incluidas | Prueba gratuita |
 |------|--------|-----------------|-----------------|
-| **Básico** | ARS 15.000/mes | ~100 fotos/mes | 14 días o 30 fotos |
-| **Plus** | ARS 30.000/mes | ~300 fotos/mes | 14 días o 30 fotos |
+| **Básico** | ARS 7.000/mes (default; configurable) | ~100 fotos/mes | 14 días o 30 fotos |
+| **Plus** | a definir | ~300 fotos/mes | 14 días o 30 fotos |
 
-Pago mediante **Mercado Pago** (suscripción recurrente mensual).
+Pago mediante **Mercado Pago** (suscripción recurrente mensual). Variable: `SUBSCRIPTION_PRICE_ARS` (default `7000`).
 
 ### Competencia
 
@@ -96,7 +96,7 @@ El proyecto está pensado para ser construido por pasos. Ver el roadmap completo
 4. ✅ Persistencia Neon/memoria + R2 + reply WhatsApp
 5. ✅ Exportación CSV/Excel (WhatsApp + GET /api/export)
 6. ✅ Resumen semanal + pronóstico mensual (WhatsApp + job lunes)
-7. Integración de billing con Mercado Pago
+7. ✅ Billing Mercado Pago (trial 14d/30 fotos + preapproval)
 8. Cola de revisión para baja confianza
 9. Landing page y onboarding
 
@@ -141,6 +141,8 @@ Ver `.env.example`. Resumen:
 | R2 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | `MockStorage` |
 | Export API | `EXPORT_API_TOKEN` | `GET /api/export` responde 401 |
 | Jobs / cron | `JOBS_API_TOKEN` (o `EXPORT_API_TOKEN`) | `POST /api/jobs/*` responde 401 |
+| Mercado Pago | `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET` | Cliente mock |
+| Billing | `SUBSCRIPTION_PRICE_ARS` (default 7000), `TRIAL_DAYS`, `TRIAL_PHOTOS` | Trial 14d / 30 fotos |
 
 ### Credenciales para ir a producción
 

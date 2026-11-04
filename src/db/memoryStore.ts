@@ -3,7 +3,14 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { Comercio, Usuario, Foto, Venta, Item } from './types.js';
+import type {
+  Comercio,
+  Usuario,
+  Foto,
+  Venta,
+  Item,
+  Suscripcion,
+} from './types.js';
 
 export class MemoryStore {
   comercios = new Map<string, Comercio>();
@@ -11,6 +18,7 @@ export class MemoryStore {
   fotos = new Map<string, Foto>();
   ventas = new Map<string, Venta>();
   items = new Map<string, Item>();
+  suscripciones = new Map<string, Suscripcion>();
 
   nuevoId(): string {
     return randomUUID();
@@ -22,6 +30,7 @@ export class MemoryStore {
     this.fotos.clear();
     this.ventas.clear();
     this.items.clear();
+    this.suscripciones.clear();
   }
 }
 

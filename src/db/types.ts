@@ -57,3 +57,31 @@ export type Item = {
   subtotal: number;
   orden: number;
 };
+
+/** Estados de suscripción (M6) */
+export type EstadoSuscripcion =
+  | 'trial'
+  | 'activa'
+  | 'pausada'
+  | 'cancelada'
+  | 'en_mora';
+
+export type Suscripcion = {
+  id: string;
+  comercio_id: string;
+  plan: string;
+  precio_mensual: number;
+  estado: EstadoSuscripcion;
+  mercadopago_preapproval_id: string | null;
+  init_point: string | null;
+  fecha_inicio: string; // YYYY-MM-DD
+  fecha_fin_trial: string | null;
+  fecha_proximo_cobro: string | null;
+  fotos_usadas_mes: number;
+  /** Contador de fotos en trial (14 días o N fotos) */
+  fotos_usadas_trial: number;
+  limite_fotos_mes: number | null;
+  limite_fotos_trial: number;
+  creada_en: Date;
+  actualizada_en: Date;
+};

@@ -1,5 +1,5 @@
 /**
- * Orquestación M3: foto → storage → extracción → persistencia → reply WhatsApp
+ * Orquestación M3/M6: foto → billing gate → storage → extracción → persistencia → reply
  */
 
 import type { IExtractor } from '../extraction/extractor.js';
@@ -14,6 +14,7 @@ import {
   resumenVentaRegistrada,
 } from './resumen.js';
 import type { VentaConItems } from '../db/repositories/ventaRepository.js';
+import type { SuscripcionService } from './suscripcionService.js';
 
 export type VentaServiceDeps = {
   repos: Repositories;
@@ -21,12 +22,14 @@ export type VentaServiceDeps = {
   extractor: IExtractor;
   sender: IWhatsAppSender;
   minConfidence?: number;
+  suscripciones?: SuscripcionService;
 };
 
 export type ProcesarImagenResult = {
-  venta: VentaConItems;
+  venta: VentaConItems | null;
   mensaje: string;
   bajaConfianza: boolean;
+  bloqueado?: boolean;
 };
 
 export class VentaService {
@@ -36,10 +39,33 @@ export class VentaService {
    * Pipeline completo al recibir una imagen por WhatsApp
    */
   async procesarImagen(imagen: ImagenRecibida): Promise<ProcesarImagenResult> {
-    const { repos, storage, extractor, sender } = this.deps;
+    const { repos, storage, extractor, sender, suscripciones } = this.deps;
 
     const { comercio, usuario } =
       await repos.comercios.encontrarOCrearPorTelefono(imagen.from);
+
+    // Gate de billing (M6)
+    if (suscripciones) {
+      let acceso = await suscripciones.evaluarAcceso(comercio.id);
+      if (!acceso.permitido) {
+        // Asegurar link de pago
+        if (!acceso.initPoint) {
+          const { initPoint } = await suscripciones.obtenerLinkPago(
+            comercio.id,
+            comercio.email ?? undefined
+          );
+          acceso = { ...acceso, initPoint };
+        }
+        const mensaje = suscripciones.mensajeBloqueo(acceso);
+        await sender.enviarMensaje(imagen.from, mensaje);
+        return {
+          venta: null,
+          mensaje,
+          bajaConfianza: false,
+          bloqueado: true,
+        };
+      }
+    }
 
     const foto = await repos.fotos.guardar({
       comercio_id: comercio.id,
@@ -77,6 +103,10 @@ export class VentaService {
       bajaConfianza ? 'revision' : 'procesada',
       uploaded.url
     );
+
+    if (suscripciones) {
+      await suscripciones.registrarFotoUsada(comercio.id);
+    }
 
     const mensaje = bajaConfianza
       ? resumenPendienteRevision()
