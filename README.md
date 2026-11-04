@@ -64,7 +64,7 @@ Pago mediante **Mercado Pago** (suscripción recurrente mensual).
 │  - Recibe foto                          │
 │  - Llama a Vision LLM (GPT-4V/Claude)   │
 │  - Extrae items, precios, totales       │
-│  - Guarda en Postgres (Supabase)        │
+│  - Guarda en Postgres (Neon)            │
 │  - Responde resumen por WhatsApp        │
 └─────────────────────────────────────────┘
        │
@@ -77,7 +77,7 @@ Pago mediante **Mercado Pago** (suscripción recurrente mensual).
 
 **Stack recomendado**:
 - Backend: Node.js + TypeScript + Express
-- Base de datos: PostgreSQL (Supabase)
+- Base de datos: PostgreSQL (Neon serverless)
 - OCR/Extracción: OpenAI GPT-4V o Anthropic Claude 3.5 Sonnet
 - Mensajería: WhatsApp Cloud API
 - Pagos: Mercado Pago Subscriptions
@@ -106,7 +106,7 @@ El proyecto está pensado para ser construido por pasos. Ver el roadmap completo
 
 - Node.js 20+
 - npm o pnpm
-- PostgreSQL (o cuenta en Supabase)
+- PostgreSQL local o cuenta en Neon (serverless Postgres)
 
 ### Setup
 
@@ -133,7 +133,7 @@ npm run dev
 
 - **WhatsApp Cloud API**: [developers.facebook.com](https://developers.facebook.com)
 - **OpenAI API**: [platform.openai.com](https://platform.openai.com)
-- **Supabase**: [supabase.com](https://supabase.com)
+- **Neon Database**: [neon.tech](https://neon.tech) - serverless Postgres con free tier generoso
 - **Mercado Pago**: [developers.mercadopago.com](https://developers.mercadopago.com)
 
 ## Operación y Automatización

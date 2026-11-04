@@ -137,7 +137,7 @@ Este roadmap está pensado para que Joaquín construya el proyecto paso a paso e
    - Si mensaje de texto contiene comando
    - Obtener ventas del rango
    - Generar archivo
-   - Subir a Supabase Storage o storage temporal
+   - Subir a Cloudflare R2 o storage temporal
    - Enviar link al usuario por WhatsApp
 4. Tests:
    - Generación de CSV con datos dummy

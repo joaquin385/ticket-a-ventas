@@ -10,9 +10,11 @@
 
 ### Base de Datos
 - **Motor**: PostgreSQL 15+
-- **Hosting**: Supabase (incluye auth, storage, realtime)
-- **ORM/Query Builder**: Prisma o Drizzle
-- **Migraciones**: herramienta nativa del ORM
+- **Hosting**: Neon (serverless Postgres con free tier generoso: 512 MB storage, 0.5 GB RAM)
+- **Cliente**: `@neondatabase/serverless` (optimizado para edge) o `pg` (driver estándar)
+- **Migraciones**: SQL puro en carpeta `migrations/` (sin vendor lock-in)
+  - Ejemplo: `001_create_comercios.sql`, `002_create_ventas.sql`
+  - Ejecutar con script custom o herramienta como `node-pg-migrate`
 
 ### APIs Externas
 
@@ -33,10 +35,12 @@
 - SDK oficial de Mercado Pago para Node
 
 ### Otros Servicios
+- **Storage de fotos**: Cloudflare R2 (compatible S3, 10 GB free/mes, sin egress fees)
+  - Alternativa: guardar solo URLs temporales de WhatsApp (válidas 24-48hs)
 - **Exports**: librería `exceljs` o `xlsx` para generar Excel
 - **Cron jobs**: node-cron o servicio externo (Trigger.dev, Inngest)
 - **Logs**: Winston o Pino
-- **Deploy**: Railway, Render, Fly.io (con Postgres incluido)
+- **Deploy**: Railway, Render, Fly.io (Neon ya provee la DB)
 
 ---
 
@@ -323,8 +327,9 @@ export type VentaExtracted = z.infer<typeof VentaExtractedSchema>;
 
 ### Fase 1 (MVP): 1-50 comercios
 - Backend monolítico
-- Postgres en Supabase tier gratuito
+- Postgres en Neon free tier (hasta 10 proyectos, 512 MB c/u)
 - Procesar fotos síncronamente
+- Fotos: URLs temporales de WhatsApp (no persistir)
 
 ### Fase 2: 50-500 comercios
 - Background jobs con Bull/BullMQ + Redis
