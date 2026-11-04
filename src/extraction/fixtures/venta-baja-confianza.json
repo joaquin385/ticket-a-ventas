@@ -1,0 +1,21 @@
+{
+  "fecha": "2024-11-04",
+  "hora": "09:15",
+  "items": [
+    {
+      "descripcion": "producto ilegible",
+      "cantidad": 1,
+      "precio_unitario": 500.0,
+      "subtotal": 500.0
+    },
+    {
+      "descripcion": "??? manzana?",
+      "cantidad": 2,
+      "precio_unitario": 0,
+      "subtotal": 0
+    }
+  ],
+  "total": 500.0,
+  "medio_pago": null,
+  "confianza": 0.35
+}

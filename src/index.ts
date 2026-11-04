@@ -8,6 +8,7 @@ import express from 'express';
 import { loadConfig } from './config.js';
 import { createMediaClient } from './whatsapp/media.js';
 import { registerWebhookRoutes, rawBodyMiddleware } from './whatsapp/routes.js';
+import { createExtractor, bufferToDataUrl } from './extraction/extractor.js';
 
 export const APP_VERSION = '0.1.0';
 
@@ -37,13 +38,32 @@ export function createApp() {
     apiVersion: config.whatsapp.apiVersion,
   });
 
+  const extractor = createExtractor(config);
+
   registerWebhookRoutes(app, {
     config,
     mediaClient,
-    // onImage se cablea en M2/M3
+    onImage: async (imagen) => {
+      const dataUrl = bufferToDataUrl(imagen.buffer, imagen.mimeType);
+      const extract =
+        extractor.extractWithFlags?.bind(extractor) ??
+        (async (url: string) => {
+          const venta = await extractor.extract(url);
+          return { venta, bajaConfianza: venta.confianza < config.minConfidenceScore };
+        });
+      const result = await extract(dataUrl);
+      console.log('Extracción:', {
+        from: imagen.from,
+        total: result.venta.total,
+        items: result.venta.items.length,
+        confianza: result.venta.confianza,
+        bajaConfianza: result.bajaConfianza,
+      });
+      // Persistencia + reply en M3
+    },
   });
 
-  return { app, config };
+  return { app, config, extractor };
 }
 
 // Arranque solo si se ejecuta directamente (no en tests)
