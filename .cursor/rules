@@ -1,0 +1,42 @@
+# Reglas del Proyecto: Ticket a Ventas
+
+## Idioma y Nomenclatura
+- **Código de dominio**: nombres en español rioplatense (comercio, venta, foto, etc.)
+- **Código técnico**: inglés (function, import, export, etc.)
+- **Comentarios**: español cuando explican lógica de negocio
+- **Tests**: descripciones en español
+
+## TypeScript
+- Modo `strict: true` siempre activo
+- Evitar `any`, usar `unknown` cuando sea necesario
+- Preferir `type` sobre `interface` para tipos de datos
+- Usar Zod para validación de schemas y parsing
+
+## Estructura de Archivos
+- Un módulo por archivo
+- Tests al lado del código: `modulo.ts` → `modulo.test.ts`
+- Exports nombrados, evitar default exports
+- Barrel exports (`index.ts`) solo cuando simplifique imports
+
+## Testing
+- Framework: Vitest
+- Cobertura mínima: lógica de negocio crítica
+- Mockear APIs externas (WhatsApp, Vision, Mercado Pago)
+- Tests deben correr sin dependencias externas
+
+## Commits
+- Mensajes en español
+- Formato: "tipo: descripción" (ej: "feat: webhook de WhatsApp", "fix: validación de total")
+- Un commit por feature/fix lógico
+
+## APIs Externas
+- Siempre validar responses con Zod
+- Manejar rate limits y reintentos
+- Loguear errores con contexto suficiente
+- No exponer API keys en logs
+
+## Moneda y Formatos
+- Montos siempre en ARS (pesos argentinos)
+- Almacenar como números decimales (Decimal en DB)
+- Fechas en UTC, mostrar en Argentina/Buenos_Aires
+- Formato de fecha: YYYY-MM-DD para storage, DD/MM/YYYY para UI
