@@ -2,13 +2,45 @@
  * Tests para el webhook de WhatsApp
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   verificarWebhook,
   procesarMensaje,
+  extraerMensajesImagen,
   type WebhookVerifyParams,
   type WebhookMessagePayload,
 } from './webhook.js';
+import { MockMediaClient } from './media.js';
+
+const payloadImagen: WebhookMessagePayload = {
+  object: 'whatsapp_business_account',
+  entry: [
+    {
+      id: '123456789',
+      changes: [
+        {
+          value: {
+            messaging_product: 'whatsapp',
+            messages: [
+              {
+                from: '5491112345678',
+                id: 'wamid.123',
+                timestamp: '1699564800',
+                type: 'image',
+                image: {
+                  id: 'media_12345',
+                  mime_type: 'image/jpeg',
+                  sha256: 'abc123',
+                },
+              },
+            ],
+          },
+          field: 'messages',
+        },
+      ],
+    },
+  ],
+};
 
 describe('Webhook de WhatsApp', () => {
   describe('verificarWebhook', () => {
@@ -48,43 +80,33 @@ describe('Webhook de WhatsApp', () => {
     });
   });
 
-  describe('procesarMensaje', () => {
-    it('debería procesar correctamente un mensaje con imagen', async () => {
-      const payload: WebhookMessagePayload = {
-        object: 'whatsapp_business_account',
-        entry: [
-          {
-            id: '123456789',
-            changes: [
-              {
-                value: {
-                  messaging_product: 'whatsapp',
-                  messages: [
-                    {
-                      from: '5491112345678',
-                      id: 'wamid.123',
-                      timestamp: '1699564800',
-                      type: 'image',
-                      image: {
-                        id: 'media_12345',
-                        mime_type: 'image/jpeg',
-                        sha256: 'abc123',
-                      },
-                    },
-                  ],
-                },
-                field: 'messages',
-              },
-            ],
-          },
-        ],
-      };
+  describe('extraerMensajesImagen', () => {
+    it('debería listar media ids de imágenes', () => {
+      const imgs = extraerMensajesImagen(payloadImagen);
+      expect(imgs).toHaveLength(1);
+      expect(imgs[0].mediaId).toBe('media_12345');
+      expect(imgs[0].from).toBe('5491112345678');
+    });
+  });
 
-      const resultado = await procesarMensaje(payload);
+  describe('procesarMensaje', () => {
+    it('debería procesar imagen y descargar media vía mock', async () => {
+      const onImage = vi.fn();
+      const resultado = await procesarMensaje(payloadImagen, {
+        mediaClient: new MockMediaClient(),
+        onImage,
+      });
+
       expect(resultado).toBe(true);
+      expect(onImage).toHaveBeenCalledTimes(1);
+      const arg = onImage.mock.calls[0][0];
+      expect(arg.mediaId).toBe('media_12345');
+      expect(arg.buffer).toBeInstanceOf(Buffer);
+      expect(arg.mediaUrl).toContain('media_12345');
     });
 
     it('debería procesar correctamente un mensaje de texto', async () => {
+      const onText = vi.fn();
       const payload: WebhookMessagePayload = {
         object: 'whatsapp_business_account',
         entry: [
@@ -113,8 +135,9 @@ describe('Webhook de WhatsApp', () => {
         ],
       };
 
-      const resultado = await procesarMensaje(payload);
+      const resultado = await procesarMensaje(payload, { onText });
       expect(resultado).toBe(true);
+      expect(onText).toHaveBeenCalledWith('5491112345678', 'Hola');
     });
 
     it('debería retornar false cuando el objeto no es whatsapp_business_account', async () => {
