@@ -91,9 +91,9 @@ El proyecto está pensado para ser construido por pasos. Ver el roadmap completo
 
 **Milestones clave**:
 1. ✅ Scaffold inicial
-2. Webhook de WhatsApp funcionando
-3. Extracción de datos con Vision LLM
-4. Almacenamiento y respuesta automática
+2. ✅ Webhook de WhatsApp (verify + firma + media)
+3. ✅ Extracción Vision LLM (OpenAI-compatible + mock)
+4. ✅ Persistencia Neon/memoria + R2 + reply WhatsApp
 5. Exportación a CSV/Excel
 6. Resúmenes semanales y forecast mensual
 7. Integración de billing con Mercado Pago
@@ -106,7 +106,7 @@ El proyecto está pensado para ser construido por pasos. Ver el roadmap completo
 
 - Node.js 20+
 - npm o pnpm
-- PostgreSQL local o cuenta en Neon (serverless Postgres)
+- (Opcional) Neon, Meta WhatsApp, Vision API, Cloudflare R2 — sin ellos corre en **modo mock**
 
 ### Setup
 
@@ -120,21 +120,33 @@ npm install
 
 # Copiar variables de entorno
 cp .env.example .env
-# Editar .env con tus credenciales
+# Editar .env solo cuando quieras salir del modo mock
 
-# Correr tests
+# Correr tests (no requiere credenciales)
 npm test
 
-# Modo desarrollo
+# Modo desarrollo (webhook en :3000, mocks si faltan env vars)
 npm run dev
 ```
 
-### Obtener credenciales
+### Variables de entorno
 
-- **WhatsApp Cloud API**: [developers.facebook.com](https://developers.facebook.com)
-- **OpenAI API**: [platform.openai.com](https://platform.openai.com)
-- **Neon Database**: [neon.tech](https://neon.tech) - serverless Postgres con free tier generoso
-- **Mercado Pago**: [developers.mercadopago.com](https://developers.mercadopago.com)
+Ver `.env.example`. Resumen:
+
+| Grupo | Variables | Sin valor |
+|-------|-----------|-----------|
+| WhatsApp | `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET` | Mock media/sender; firma omitida |
+| Neon | `DATABASE_URL` (pooler) | Repositorios in-memory |
+| Vision | `VISION_API_KEY`, `VISION_API_BASE_URL`, `VISION_MODEL` | `MockExtractor` + fixtures |
+| R2 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | `MockStorage` |
+
+### Credenciales para ir a producción
+
+1. **Meta App + WhatsApp Cloud API** — [developers.facebook.com](https://developers.facebook.com): número WA, tokens, App Secret, webhook
+2. **Neon** — [neon.tech](https://neon.tech): proyecto Postgres; aplicar `migrations/*.sql`
+3. **Vision LLM** — API key OpenAI-compatible (ej. [platform.openai.com](https://platform.openai.com))
+4. **Cloudflare R2** — [dash.cloudflare.com](https://dash.cloudflare.com): bucket + access keys S3
+5. **Mercado Pago** (M6) — [developers.mercadopago.com](https://developers.mercadopago.com)
 
 ## Operación y Automatización
 

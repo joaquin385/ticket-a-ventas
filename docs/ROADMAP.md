@@ -4,114 +4,75 @@ Este roadmap está pensado para que Joaquín construya el proyecto paso a paso e
 
 ---
 
-## Milestone 1: Webhook de WhatsApp
+## Milestone 1: Webhook de WhatsApp — ✅ HECHO
 
 **Objetivo**: Recibir mensajes de WhatsApp y verificar que el webhook funciona.
 
-### Archivos a crear/modificar:
-- `src/index.ts` - servidor Express
-- `src/whatsapp/webhook.ts` - handlers GET (verify) y POST (receive)
-- `src/whatsapp/webhook.test.ts` - tests unitarios
-- `.env` - agregar `WHATSAPP_VERIFY_TOKEN` y `PORT`
+### Entregado
+- `src/index.ts` — servidor Express (`npm run dev`)
+- `src/whatsapp/webhook.ts` — verify + receive + descarga de imágenes
+- `src/whatsapp/signature.ts` — `X-Hub-Signature-256` con `WHATSAPP_APP_SECRET`
+- `src/whatsapp/media.ts` — Graph API media download + `MockMediaClient`
+- `src/whatsapp/routes.ts` — GET/POST `/webhook`, `/health`
+- Sin token → mock (tests y local sin Meta)
 
-### Tareas:
-1. Crear servidor Express en puerto configurable
-2. Implementar endpoint GET `/webhook` para verificación
-   - Validar `hub.mode`, `hub.verify_token`, `hub.challenge`
-   - Retornar challenge si válido
-3. Implementar endpoint POST `/webhook` para recibir mensajes
-   - Loguear payload completo
-   - Retornar 200 OK siempre (aunque no proceses nada aún)
-4. Tests:
-   - Verificación exitosa con token correcto
-   - Rechazo con token incorrecto
-   - Recepción de mensaje dummy
+### Criterio de aceptación: cumplido
+- `npm test` pasa; GET verify; POST recibe y valida firma
 
-### Criterio de aceptación:
-- `npm test` pasa
-- Servidor levanta con `npm run dev`
-- Endpoint GET responde correctamente
-- Endpoint POST recibe y loguea payload
-
-### Siguientes pasos:
-- Configurar webhook en WhatsApp Cloud API con URL de ngrok
-- Probar con mensaje real desde WhatsApp
+### Para ir a producción (M1)
+1. App en [Meta for Developers](https://developers.facebook.com) con producto WhatsApp
+2. Número de WhatsApp Business + `WHATSAPP_PHONE_NUMBER_ID`
+3. `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`
+4. URL pública (ngrok/Railway) apuntando a `POST/GET /webhook`
 
 ---
 
-## Milestone 2: Extracción de Datos (Mock)
+## Milestone 2: Extracción con Vision LLM — ✅ HECHO
 
-**Objetivo**: Procesar foto recibida y extraer datos con implementación mockeada del LLM.
+**Objetivo**: Extraer venta estructurada con Vision LLM (JSON + confianza).
 
-### Archivos a crear/modificar:
-- `src/extraction/schema.ts` - Zod schemas para venta extraída
-- `src/extraction/extractor.ts` - interfaz + implementación mock
-- `src/extraction/extractor.test.ts` - tests con casos de ejemplo
-- `src/whatsapp/webhook.ts` - integrar extracción en POST handler
+### Entregado
+- `src/extraction/schema.ts` — Zod + `requiereRevision`
+- `src/extraction/extractor.ts` — `IExtractor`, `MockExtractor`, `VisionLLMExtractor` (OpenAI-compatible)
+- `src/extraction/prompt.ts` — system prompt + JSON schema estricto
+- Fixtures: `fixtures/venta-alta-confianza.json`, `venta-baja-confianza.json`
+- Sin `VISION_API_KEY` → `MockExtractor`
 
-### Tareas:
-1. Definir schemas Zod:
-   - `ItemVentaSchema`
-   - `VentaExtractedSchema`
-2. Crear interfaz `IExtractor` con método `extract(imageUrl: string): Promise<VentaExtracted>`
-3. Implementar `MockExtractor` que retorna datos hardcodeados con confianza 0.95
-4. Integrar en webhook:
-   - Detectar mensajes con imagen
-   - Extraer media URL (simulado por ahora)
-   - Llamar a extractor
-   - Loguear resultado
-5. Tests:
-   - Schema valida JSON correcto
-   - Schema rechaza JSON inválido (sin fecha, items vacíos, confianza > 1)
-   - MockExtractor retorna datos válidos
+### Criterio de aceptación: cumplido
+- Extracción validada con Zod; flag baja confianza; tests con fetch mockeado
 
-### Criterio de aceptación:
-- Todos los tests pasan
-- Webhook detecta mensajes de imagen
-- Extracción mock funciona y valida con Zod
-
-### Siguientes pasos:
-- Implementar `VisionLLMExtractor` real con OpenAI/Claude
+### Para ir a producción (M2)
+1. API key de un proveedor OpenAI-compatible (OpenAI, Azure, Groq, etc.)
+2. `VISION_API_KEY`, `VISION_API_PROVIDER=openai`, `VISION_API_BASE_URL`, `VISION_MODEL` (ej. `gpt-4o`)
 
 ---
 
-## Milestone 3: Almacenamiento y Respuesta
+## Milestone 3: Almacenamiento y Respuesta — ✅ HECHO
 
-**Objetivo**: Guardar ventas en base de datos y responder al usuario por WhatsApp.
+**Objetivo**: Persistencia Neon + fotos en R2 + reply por WhatsApp.
 
-### Archivos a crear/modificar:
-- `prisma/schema.prisma` - modelo de datos
-- `src/db/repositories/ventaRepository.ts` - CRUD de ventas
-- `src/db/repositories/fotoRepository.ts` - CRUD de fotos
-- `src/whatsapp/sender.ts` - envío de mensajes por WhatsApp API
-- `src/services/ventaService.ts` - lógica de negocio
-- Tests correspondientes
+### Entregado
+- Repositorios SQL vía `src/db/client.ts` (Neon) + memoria si no hay `DATABASE_URL`
+  - `comercioRepository`, `fotoRepository`, `ventaRepository`
+- `migrations/002_create_tables.sql` — schema completo
+- `src/storage/storage.ts` — `IStorage`, `MockStorage`, `CloudflareR2Storage`
+- `src/whatsapp/sender.ts` — Graph send + mock
+- `src/services/ventaService.ts` — pipeline: foto → R2 → extract → DB → reply
+- Resumen en español: `✅ Registré tu venta...` / `📸 Recibí tu foto, la revisamos...`
 
-### Tareas:
-1. Setup Prisma:
-   - Definir modelos: `Comercio`, `Foto`, `Venta`, `Item`
-   - Migración inicial
-2. Crear repositories:
-   - `crearVenta(data)`, `obtenerVentasPorComercio(comercioId, desde, hasta)`
-   - `guardarFoto(data)`, `actualizarEstadoFoto(fotoId, estado)`
-3. Implementar cliente WhatsApp:
-   - `enviarMensaje(telefono, texto)`
-   - Autenticación con `WHATSAPP_ACCESS_TOKEN`
-4. Integrar en flujo webhook:
-   - Guardar foto recibida
-   - Extraer datos
-   - Guardar venta + items
-   - Generar resumen: "✅ Registré tu venta: $X en Y items (fecha Z)"
-   - Enviar respuesta al usuario
-5. Manejo de confianza baja:
-   - Si `confianza < 0.7`: marcar `requiere_revision`
-   - Responder: "📸 Recibí tu foto, la revisamos y te confirmamos"
+### Criterio de aceptación: cumplido
+- Repos + sender + pipeline e2e en tests con mocks
+- Sin Prisma: SQL puro + Neon (alineado al stack del repo)
 
-### Criterio de aceptación:
-- DB setup exitoso con `npx prisma migrate dev`
-- Tests de repositories pasan (con DB en memoria o test DB)
-- Tests de sender mockean API de WhatsApp
-- Flujo end-to-end: recibir → extraer → guardar → responder
+### Para ir a producción (M3) — credenciales necesarias
+| Servicio | Qué crear | Variables |
+|----------|-----------|-----------|
+| **Meta / WhatsApp** | App + número WA Business | `WHATSAPP_*` (ver M1) |
+| **Neon** | Proyecto Postgres + pooler | `DATABASE_URL` (correr `migrations/*.sql`) |
+| **Vision LLM** | API key OpenAI-compatible | `VISION_API_*` (ver M2) |
+| **Cloudflare R2** | Bucket + API token S3 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` |
+
+Sin estas variables el servidor corre en **modo mock** (útil para desarrollo y `npm test`).
 
 ---
 
