@@ -94,7 +94,7 @@ El proyecto está pensado para ser construido por pasos. Ver el roadmap completo
 2. ✅ Webhook de WhatsApp (verify + firma + media)
 3. ✅ Extracción Vision LLM (OpenAI-compatible + mock)
 4. ✅ Persistencia Neon/memoria + R2 + reply WhatsApp
-5. Exportación a CSV/Excel
+5. ✅ Exportación CSV/Excel (WhatsApp + GET /api/export)
 6. Resúmenes semanales y forecast mensual
 7. Integración de billing con Mercado Pago
 8. Cola de revisión para baja confianza
@@ -139,6 +139,7 @@ Ver `.env.example`. Resumen:
 | Neon | `DATABASE_URL` (pooler) | Repositorios in-memory |
 | Vision | `VISION_API_KEY`, `VISION_API_BASE_URL`, `VISION_MODEL` | `MockExtractor` + fixtures |
 | R2 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | `MockStorage` |
+| Export API | `EXPORT_API_TOKEN` | `GET /api/export` responde 401 |
 
 ### Credenciales para ir a producción
 

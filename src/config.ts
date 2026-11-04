@@ -32,6 +32,8 @@ export type AppConfig = {
     publicBaseUrl: string | null;
   };
   minConfidenceScore: number;
+  /** Token Bearer para GET /api/export */
+  exportApiToken: string | null;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -68,6 +70,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       publicBaseUrl: env.R2_PUBLIC_BASE_URL || null,
     },
     minConfidenceScore: Number(env.MIN_CONFIDENCE_SCORE ?? 0.7),
+    exportApiToken: env.EXPORT_API_TOKEN || env.API_TOKEN || null,
   };
 }
 

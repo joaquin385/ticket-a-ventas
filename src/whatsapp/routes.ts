@@ -16,6 +16,11 @@ export type WebhookRouteDeps = {
       ? F
       : never
     : never;
+  onText?: Parameters<typeof procesarMensaje>[1] extends infer O
+    ? O extends { onText?: infer F }
+      ? F
+      : never
+    : never;
 };
 
 /**
@@ -48,7 +53,7 @@ export function registerWebhookRoutes(
   app: Express,
   deps: WebhookRouteDeps
 ): void {
-  const { config, mediaClient, onImage } = deps;
+  const { config, mediaClient, onImage, onText } = deps;
 
   app.get('/webhook', (req: Request, res: Response) => {
     const mode = String(req.query['hub.mode'] ?? '');
@@ -91,9 +96,11 @@ export function registerWebhookRoutes(
     const payload = req.body as WebhookMessagePayload;
     console.log('Webhook payload recibido:', JSON.stringify(payload));
 
-    void procesarMensaje(payload, { mediaClient, onImage }).catch((err) => {
-      console.error('Error procesando webhook:', err);
-    });
+    void procesarMensaje(payload, { mediaClient, onImage, onText }).catch(
+      (err) => {
+        console.error('Error procesando webhook:', err);
+      }
+    );
   });
 
   app.get('/health', (_req: Request, res: Response) => {

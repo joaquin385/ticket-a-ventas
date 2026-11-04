@@ -1,7 +1,7 @@
 /**
  * Punto de entrada principal de Ticket a Ventas
  *
- * M1 webhook · M2 extracción · M3 persistencia + reply
+ * M1 webhook · M2 extracción · M3 persistencia · M4 export
  */
 
 import express from 'express';
@@ -12,7 +12,10 @@ import { createExtractor } from './extraction/extractor.js';
 import { createRepositories } from './db/repositories/index.js';
 import { createStorage } from './storage/storage.js';
 import { createWhatsAppSender } from './whatsapp/sender.js';
+import { createDocumentSender } from './whatsapp/documentSender.js';
 import { VentaService } from './services/ventaService.js';
+import { ExportHandler } from './services/exportHandler.js';
+import { registerExportRoutes } from './routes/exportRoutes.js';
 
 export const APP_VERSION = '0.1.0';
 
@@ -49,6 +52,11 @@ export function createApp() {
     phoneNumberId: config.whatsapp.phoneNumberId,
     apiVersion: config.whatsapp.apiVersion,
   });
+  const documentSender = createDocumentSender({
+    accessToken: config.whatsapp.accessToken,
+    phoneNumberId: config.whatsapp.phoneNumberId,
+    apiVersion: config.whatsapp.apiVersion,
+  });
 
   const ventaService = new VentaService({
     repos,
@@ -56,6 +64,12 @@ export function createApp() {
     extractor,
     sender,
     minConfidence: config.minConfidenceScore,
+  });
+
+  const exportHandler = new ExportHandler({
+    repos,
+    sender,
+    documentSender,
   });
 
   registerWebhookRoutes(app, {
@@ -74,9 +88,38 @@ export function createApp() {
         console.error('Error en pipeline de venta:', err);
       }
     },
+    onText: async (from, body) => {
+      try {
+        const handled = await exportHandler.manejarTextoWhatsApp(from, body);
+        if (!handled) {
+          console.log('Texto sin comando reconocido:', body);
+        }
+      } catch (err) {
+        console.error('Error procesando comando de texto:', err);
+        await sender.enviarMensaje(
+          from,
+          'Hubo un error al exportar. Probá de nuevo en un rato.'
+        );
+      }
+    },
   });
 
-  return { app, config, ventaService, repos, storage, sender, extractor };
+  registerExportRoutes(app, {
+    exportHandler,
+    apiToken: config.exportApiToken,
+  });
+
+  return {
+    app,
+    config,
+    ventaService,
+    exportHandler,
+    repos,
+    storage,
+    sender,
+    documentSender,
+    extractor,
+  };
 }
 
 const isMain =
@@ -97,6 +140,9 @@ if (isMain) {
     }
     if (!config.vision.apiKey) {
       console.warn('Modo mock: sin VISION_API_KEY');
+    }
+    if (!config.exportApiToken) {
+      console.warn('GET /api/export requiere EXPORT_API_TOKEN');
     }
   });
 }

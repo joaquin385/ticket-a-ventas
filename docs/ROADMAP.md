@@ -76,39 +76,28 @@ Sin estas variables el servidor corre en **modo mock** (útil para desarrollo y 
 
 ---
 
-## Milestone 4: Exportación CSV/Excel
+## Milestone 4: Exportación CSV/Excel — ✅ HECHO
 
 **Objetivo**: Usuario puede solicitar exportar sus ventas a archivo.
 
-### Archivos a crear/modificar:
-- `src/services/exportService.ts` - generación de CSV/Excel
-- `src/whatsapp/commands.ts` - parser de comandos por texto
-- `src/whatsapp/webhook.ts` - detectar comando "exportar"
-- Tests
+### Entregado
+- `src/services/exportService.ts` — CSV + Excel (hojas **Ventas** y **Totales**), columnas en español, montos ARS
+- `src/whatsapp/commands.ts` — `exportar` / `exportar mes` / `exportar semana` / `exportar csv`
+- `src/whatsapp/documentSender.ts` — upload media Graph API + envío documento (mock en tests)
+- `src/services/exportHandler.ts` — orquesta WhatsApp → archivo
+- `GET /api/export` — Bearer `EXPORT_API_TOKEN`, query `comercio_id`, `desde`, `hasta`, `formato`
 
-### Tareas:
-1. Implementar generación de archivos:
-   - `generarCSV(ventasConItems)` → buffer o path
-   - `generarExcel(ventasConItems)` → buffer o path
-   - Columnas: Fecha | Hora | Producto | Cantidad | Precio Unit. | Subtotal | Total Venta | Medio Pago
-2. Parser de comandos:
-   - Detectar "exportar", "exportar semana", "exportar mes"
-   - Mapear a rango de fechas
-3. Integrar en webhook:
-   - Si mensaje de texto contiene comando
-   - Obtener ventas del rango
-   - Generar archivo
-   - Subir a Cloudflare R2 o storage temporal
-   - Enviar link al usuario por WhatsApp
-4. Tests:
-   - Generación de CSV con datos dummy
-   - Parsing de comandos
-   - Flujo completo con mock de storage
+### Criterio de aceptación: cumplido
+- WhatsApp: "exportar mes" → responde con archivo `.xlsx`/`.csv` (documento vía Graph / mock)
+- HTTP autenticado descarga el mismo export
+- Archivo incluye ítems + hoja/sección Totales
 
-### Criterio de aceptación:
-- Usuario envía "exportar mes" por WhatsApp
-- Recibe link descargable con archivo Excel/CSV
-- Archivo contiene todas las ventas del mes con items
+### Uso
+```text
+WhatsApp: exportar | exportar mes | exportar semana | exportar mes csv
+HTTP: GET /api/export?comercio_id=...&desde=YYYY-MM-DD&hasta=YYYY-MM-DD&formato=xlsx
+      Authorization: Bearer $EXPORT_API_TOKEN
+```
 
 ---
 
